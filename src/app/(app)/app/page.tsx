@@ -41,7 +41,7 @@ export default function DashboardPage() {
             className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
             href="/app/universities"
           >
-            Add universities
+            Add uni
           </Link>
           <Link
             className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
@@ -88,10 +88,43 @@ export default function DashboardPage() {
 
         <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
           <div className="text-sm font-semibold text-black">
-            Missing documents
+            Document templates
           </div>
-          <div className="mt-2 text-sm text-black/70">
-            You’ll get a “what’s missing” list per university/program.
+          <div className="mt-3 space-y-2">
+            {workspace.documentTemplates.length === 0 ? (
+              <div className="text-sm text-black/70">
+                No document templates yet. Add them in{" "}
+                <Link href="/app/documents" className="underline hover:text-black">
+                  Documents
+                </Link>
+                .
+              </div>
+            ) : (
+              <>
+                {workspace.documentTemplates.slice(0, 5).map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="rounded-lg border border-black/10 bg-white p-2"
+                  >
+                    <div className="text-sm text-black">{doc.name}</div>
+                    {doc.category ? (
+                      <div className="text-xs text-black/60">{doc.category}</div>
+                    ) : null}
+                  </div>
+                ))}
+                {workspace.documentTemplates.length > 5 ? (
+                  <div className="text-xs text-black/60">
+                    +{workspace.documentTemplates.length - 5} more
+                  </div>
+                ) : null}
+                <Link
+                  href="/app/documents"
+                  className="mt-2 block text-xs text-black/70 hover:text-black underline"
+                >
+                  Manage all documents →
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

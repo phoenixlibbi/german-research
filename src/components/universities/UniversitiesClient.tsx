@@ -161,6 +161,37 @@ export function UniversitiesClient() {
             <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
+
+        {ws.documentTemplates.length > 0 ? (
+          <div className="mt-4 rounded-lg border border-black/10 bg-white p-3">
+            <div className="text-xs font-semibold text-black/70 mb-2">
+              Available document templates ({ws.documentTemplates.length}):
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {ws.documentTemplates.map((doc) => (
+                <span
+                  key={doc.id}
+                  className="rounded-lg border border-black/20 bg-white px-2 py-1 text-xs text-black"
+                >
+                  {doc.name}
+                </span>
+              ))}
+            </div>
+            <div className="mt-2 text-xs text-black/60">
+              These documents can be marked as required when adding/editing a university.
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-lg border border-black/10 bg-white p-3">
+            <div className="text-xs text-black/70">
+              No document templates yet. Add them in{" "}
+              <a href="/app/documents" className="underline hover:text-black">
+                Documents
+              </a>
+              .
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
