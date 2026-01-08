@@ -1,6 +1,5 @@
 import {
   CalendarDays,
-  ClipboardCheck,
   Files,
   GraduationCap,
   LayoutDashboard,
@@ -17,7 +16,6 @@ export const navItems = [
   { href: "/app/deadlines", label: "Deadlines", icon: Timer },
   { href: "/app/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/app/documents", label: "Documents", icon: Files },
-  { href: "/app/checklists", label: "Checklists", icon: ClipboardCheck },
   { href: "/app/targets", label: "Targets", icon: Target },
   { href: "/app/notes", label: "Notes", icon: NotebookPen },
   { href: "/app/admin", label: "Admin", icon: Shield },
