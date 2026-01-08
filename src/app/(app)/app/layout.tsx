@@ -3,6 +3,8 @@ import { signOut } from "@/app/(auth)/actions";
 import { AppShell } from "@/components/app/AppShell";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: Readonly<{
