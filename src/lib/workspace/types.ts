@@ -2,12 +2,32 @@ export type UUID = string;
 
 export type UploadedDoc = {
   id: UUID;
+  displayName: string;
   originalName: string;
   storedName: string;
   mimeType: string;
   size: number;
   createdAt: string; // ISO
+  updatedAt: string; // ISO
   notes?: string;
+};
+
+export type FieldType = "string" | "number" | "date" | "boolean" | "url" | "text";
+
+export type UniversityFieldDefinition = {
+  id: UUID;
+  key: string; // stored in University.fields[key]
+  label: string;
+  type: FieldType;
+  required?: boolean;
+};
+
+export type AdminSettings = {
+  universityFields: UniversityFieldDefinition[];
+  calendar: {
+    startFieldKey: string | null;
+    endFieldKey: string | null;
+  };
 };
 
 export type University = {
@@ -16,6 +36,7 @@ export type University = {
   city?: string;
   website?: string;
   notes?: string;
+  fields: Record<string, string | number | boolean | null>;
   createdAt: string;
   updatedAt: string;
 };
@@ -85,8 +106,27 @@ export type ApplicationDocument = {
   updatedAt: string;
 };
 
+export type Target = {
+  id: UUID;
+  title: string;
+  type: "string" | "number" | "date" | "boolean";
+  value: string; // stored as string for simplicity
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Note = {
+  id: UUID;
+  title: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Workspace = {
   version: 1;
+  admin: AdminSettings;
   universities: University[];
   programs: Program[];
   admissionWindows: AdmissionWindow[];
@@ -94,5 +134,7 @@ export type Workspace = {
   applications: Application[];
   applicationDocuments: ApplicationDocument[];
   uploads: UploadedDoc[];
+  targets: Target[];
+  notes: Note[];
 };
 

@@ -1,0 +1,54 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Workspace } from "@/lib/workspace/types";
+
+export function useWorkspace() {
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/workspace", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load workspace");
+      const ws = (await res.json()) as Workspace;
+      setWorkspace(ws);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const save = useCallback(async (next: Workspace) => {
+    setError(null);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/workspace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      if (!res.ok) throw new Error("Failed to save workspace");
+      setWorkspace(next);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  return useMemo(
+    () => ({ workspace, setWorkspace, refresh, save, loading, saving, error }),
+    [workspace, refresh, save, loading, saving, error],
+  );
+}
+

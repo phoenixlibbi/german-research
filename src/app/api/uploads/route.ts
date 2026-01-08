@@ -19,6 +19,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("file");
+  const displayName = String(form.get("displayName") ?? "").trim();
   const notes = String(form.get("notes") ?? "").trim() || undefined;
 
   if (!(file instanceof File)) {
@@ -38,18 +39,55 @@ export async function POST(request: Request) {
   await writeFile(storedPath, buf);
 
   const ws = await loadWorkspace();
+  const now = new Date().toISOString();
   ws.uploads.unshift({
     id,
+    displayName: displayName || file.name,
     originalName: file.name,
     storedName,
     mimeType: file.type || "application/octet-stream",
     size: file.size,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     notes,
   });
   await saveWorkspace(ws);
 
   return NextResponse.json({ ok: true, id });
+}
+
+export async function PATCH(request: Request) {
+  const body = (await request.json()) as {
+    id?: string;
+    displayName?: string;
+    notes?: string | null;
+  };
+
+  const id = String(body.id ?? "").trim();
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  const ws = await loadWorkspace();
+  const idx = ws.uploads.findIndex((u) => u.id === id);
+  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const existing = ws.uploads[idx];
+  ws.uploads[idx] = {
+    ...existing,
+    displayName:
+      typeof body.displayName === "string" && body.displayName.trim()
+        ? body.displayName.trim()
+        : existing.displayName,
+    notes:
+      body.notes === null
+        ? undefined
+        : typeof body.notes === "string"
+          ? body.notes.trim() || undefined
+          : existing.notes,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await saveWorkspace(ws);
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {

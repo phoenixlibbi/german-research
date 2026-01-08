@@ -4,11 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 
 type UploadedDoc = {
   id: string;
+  displayName: string;
   originalName: string;
   storedName: string;
   mimeType: string;
   size: number;
   createdAt: string;
+  updatedAt: string;
   notes?: string;
 };
 
@@ -24,6 +26,8 @@ export function DocumentsClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [editing, setEditing] = useState<UploadedDoc | null>(null);
 
   async function refresh() {
     const res = await fetch("/api/uploads", { cache: "no-store" });
@@ -64,6 +68,7 @@ export function DocumentsClient() {
       (e.currentTarget.elements.namedItem("file") as HTMLInputElement).value =
         "";
       setNotes("");
+      setDisplayName("");
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -86,6 +91,36 @@ export function DocumentsClient() {
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onUpdateMeta(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editing) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/uploads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editing.id,
+          displayName,
+          notes,
+        }),
+      });
+      if (!res.ok) {
+        const j = (await res.json()) as { error?: string };
+        throw new Error(j.error ?? "Update failed");
+      }
+      setEditing(null);
+      setNotes("");
+      setDisplayName("");
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Update failed");
     } finally {
       setBusy(false);
     }
@@ -114,6 +149,13 @@ export function DocumentsClient() {
         ) : null}
 
         <form onSubmit={onUpload} className="mt-5 flex flex-col gap-3">
+          <input
+            name="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Document name (optional) — e.g. 'Passport Scan', 'Transcript Sem 1-8'"
+            className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+          />
           <input
             name="file"
             type="file"
@@ -145,12 +187,15 @@ export function DocumentsClient() {
               <li key={doc.id} className="flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium text-slate-100">
-                    {doc.originalName}
+                    {doc.displayName || doc.originalName}
                   </div>
                   <div className="mt-1 text-xs text-slate-400">
                     {new Date(doc.createdAt).toLocaleString()} •{" "}
                     {formatBytes(doc.size)}
                     {doc.notes ? ` • ${doc.notes}` : ""}
+                    {doc.displayName && doc.displayName !== doc.originalName
+                      ? ` • file: ${doc.originalName}`
+                      : ""}
                   </div>
                 </div>
                 <a
@@ -159,6 +204,18 @@ export function DocumentsClient() {
                 >
                   Download
                 </a>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setEditing(doc);
+                    setDisplayName(doc.displayName ?? "");
+                    setNotes(doc.notes ?? "");
+                  }}
+                  className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900 disabled:opacity-60"
+                >
+                  Update
+                </button>
                 <button
                   type="button"
                   disabled={busy}
@@ -172,6 +229,50 @@ export function DocumentsClient() {
           </ul>
         )}
       </div>
+
+      {editing ? (
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+          <div className="text-lg font-semibold">Update document</div>
+          <div className="mt-2 text-sm text-slate-300">
+            Update display name / notes (the file stays the same).
+          </div>
+
+          <form onSubmit={onUpdateMeta} className="mt-4 space-y-3">
+            <input
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Document name"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+            />
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Notes"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="submit"
+                disabled={busy}
+                className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+              >
+                {busy ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(null);
+                  setDisplayName("");
+                  setNotes("");
+                }}
+                className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }
