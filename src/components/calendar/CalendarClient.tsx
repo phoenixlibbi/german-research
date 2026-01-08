@@ -40,9 +40,10 @@ export function CalendarClient() {
     if (!workspace) return [];
     const startKey = workspace.admin.calendar.startFieldKey;
     const endKey = workspace.admin.calendar.endFieldKey;
-    if (!startKey && !endKey) return [];
 
     const out: CalEvent[] = [];
+    
+    // University dates
     for (const u of workspace.universities) {
       if (startKey) {
         const d = parseDateOrNull(u.fields?.[startKey]);
@@ -69,6 +70,23 @@ export function CalendarClient() {
         }
       }
     }
+
+    // Target dates
+    for (const t of workspace.targets ?? []) {
+      if (t.targetDate) {
+        const d = parseDateOrNull(t.targetDate);
+        if (d) {
+          out.push({
+            id: `target:${t.id}`,
+            uniId: "",
+            title: `Target: ${t.name}`,
+            date: d,
+            kind: "start",
+          });
+        }
+      }
+    }
+
     return out.sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [workspace]);
 

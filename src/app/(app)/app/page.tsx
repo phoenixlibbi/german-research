@@ -1,6 +1,32 @@
+"use client";
+
 import Link from "next/link";
+import { useWorkspace } from "@/lib/workspace/client";
+import { useMemo } from "react";
 
 export default function DashboardPage() {
+  const { workspace, loading } = useWorkspace();
+
+  const targets = useMemo(() => {
+    if (!workspace) return [];
+    return [...(workspace.targets ?? [])]
+      .filter((t) => t.targetDate)
+      .sort((a, b) => {
+        const aDate = a.targetDate ? new Date(a.targetDate).getTime() : 0;
+        const bDate = b.targetDate ? new Date(b.targetDate).getTime() : 0;
+        return aDate - bDate;
+      })
+      .slice(0, 5);
+  }, [workspace]);
+
+  if (loading || !workspace) {
+    return (
+      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/70">
+        Loading…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
@@ -29,12 +55,35 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
           <div className="text-sm font-semibold text-black">
-            Upcoming admission windows
+            Upcoming targets
           </div>
-          <div className="mt-2 text-sm text-black/70">
-            After we add the database, you’ll see dates here (start/end) and
-            application deadlines.
+          <div className="mt-3 space-y-2">
+            {targets.length === 0 ? (
+              <div className="text-sm text-black/70">No targets with dates yet.</div>
+            ) : (
+              targets.map((t) => (
+                <div key={t.id} className="rounded-lg border border-black/10 bg-white p-3">
+                  <div className="text-sm font-medium text-black">{t.name}</div>
+                  {t.description ? (
+                    <div className="mt-1 text-xs text-black/60">{t.description}</div>
+                  ) : null}
+                  {t.targetDate ? (
+                    <div className="mt-1 text-xs text-black/60">
+                      Target: {new Date(t.targetDate).toLocaleDateString()}
+                    </div>
+                  ) : null}
+                </div>
+              ))
+            )}
           </div>
+          {targets.length > 0 ? (
+            <Link
+              href="/app/targets"
+              className="mt-3 block text-xs text-black/70 hover:text-black underline"
+            >
+              View all targets →
+            </Link>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">

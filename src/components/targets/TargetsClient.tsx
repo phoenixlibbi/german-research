@@ -32,10 +32,9 @@ export function TargetsClient() {
     setCreating(true);
     setEditing({
       id: crypto.randomUUID(),
-      title: "",
-      type: "string",
-      value: "",
-      notes: "",
+      name: "",
+      description: "",
+      targetDate: "",
       createdAt: nowIso(),
       updatedAt: nowIso(),
     });
@@ -66,18 +65,16 @@ export function TargetsClient() {
     e.preventDefault();
     if (!editing) return;
     const form = new FormData(e.currentTarget);
-    const title = String(form.get("title") ?? "").trim();
-    const type = String(form.get("type") ?? "string") as Target["type"];
-    const value = String(form.get("value") ?? "").trim();
-    const notes = String(form.get("notes") ?? "").trim();
+    const name = String(form.get("name") ?? "").trim();
+    const description = String(form.get("description") ?? "").trim();
+    const targetDate = String(form.get("targetDate") ?? "").trim();
 
-    if (!title) return;
+    if (!name) return;
     await upsert({
       ...editing,
-      title,
-      type,
-      value,
-      notes: notes || undefined,
+      name,
+      description: description || undefined,
+      targetDate: targetDate || undefined,
       updatedAt: nowIso(),
     });
     setEditing(null);
@@ -119,12 +116,13 @@ export function TargetsClient() {
               <li key={t.id} className="flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-black">
-                    {t.title}
+                    {t.name}
                   </div>
                   <div className="mt-1 text-xs text-black/60">
-                    type: {t.type} • value:{" "}
-                    <span className="font-semibold text-black">{t.value || "—"}</span>
-                    {t.notes ? ` • ${t.notes}` : ""}
+                    {t.description ? `${t.description} • ` : ""}
+                    {t.targetDate
+                      ? `Target: ${new Date(t.targetDate).toLocaleDateString()}`
+                      : "No target date"}
                   </div>
                 </div>
                 <button
@@ -155,48 +153,34 @@ export function TargetsClient() {
             {creating ? "Add target" : "Update target"}
           </div>
           <form onSubmit={submit} className="mt-4 space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <div className="text-sm font-medium text-black">Title</div>
-                <input
-                  name="title"
-                  defaultValue={editing.title}
-                  required
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-
-              <label className="block">
-                <div className="text-sm font-medium text-black">Type</div>
-                <select
-                  name="type"
-                  defaultValue={editing.type}
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                >
-                  <option value="string">string</option>
-                  <option value="number">number</option>
-                  <option value="date">date</option>
-                  <option value="boolean">boolean</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <div className="text-sm font-medium text-black">Value</div>
-                <input
-                  name="value"
-                  defaultValue={editing.value}
-                  placeholder="e.g. 7.0"
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-            </div>
+            <label className="block">
+              <div className="text-sm font-medium text-black">Target name</div>
+              <input
+                name="name"
+                defaultValue={editing.name}
+                required
+                placeholder="e.g. IELTS Band 7.0"
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+            </label>
 
             <label className="block">
-              <div className="text-sm font-medium text-black">Notes</div>
+              <div className="text-sm font-medium text-black">Description</div>
               <textarea
-                name="notes"
-                defaultValue={editing.notes ?? ""}
+                name="description"
+                defaultValue={editing.description ?? ""}
                 rows={3}
+                placeholder="Optional description or notes"
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-sm font-medium text-black">Target date</div>
+              <input
+                name="targetDate"
+                type="date"
+                defaultValue={editing.targetDate ?? ""}
                 className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
               />
             </label>

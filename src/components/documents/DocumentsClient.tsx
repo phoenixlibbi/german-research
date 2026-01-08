@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useWorkspace } from "@/lib/workspace/client";
+import type { DocumentTemplate } from "@/lib/workspace/types";
 
 type UploadedDoc = {
   id: string;
@@ -22,12 +24,16 @@ function formatBytes(bytes: number) {
 }
 
 export function DocumentsClient() {
+  const { workspace, loading: wsLoading, saving, error: wsError, save } = useWorkspace();
   const [items, setItems] = useState<UploadedDoc[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [editing, setEditing] = useState<UploadedDoc | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<DocumentTemplate | null>(null);
+  const [templateName, setTemplateName] = useState("");
+  const [templateCategory, setTemplateCategory] = useState("");
 
   async function refresh() {
     const res = await fetch("/api/uploads", { cache: "no-store" });
@@ -271,6 +277,139 @@ export function DocumentsClient() {
               </button>
             </div>
           </form>
+        </div>
+      ) : null}
+
+      {workspace ? (
+        <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+          <div className="text-xl font-semibold">Document templates</div>
+          <div className="mt-2 text-sm text-black/70">
+            Manage the list of documents that appear in the university form. Users can mark which documents are required for each university.
+          </div>
+
+          {wsError ? (
+            <div className="mt-4 rounded-lg border border-black/20 bg-black/5 px-3 py-2 text-sm text-black">
+              <span className="font-semibold">Error:</span> {wsError}
+            </div>
+          ) : null}
+
+          <div className="mt-4 space-y-2">
+            {workspace.documentTemplates.map((t) => (
+              <div
+                key={t.id}
+                className="flex items-center justify-between rounded-lg border border-black/10 bg-white p-3"
+              >
+                <div>
+                  <div className="text-sm font-medium text-black">{t.name}</div>
+                  {t.category ? (
+                    <div className="text-xs text-black/60">{t.category}</div>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => {
+                    const next = {
+                      ...workspace,
+                      documentTemplates: workspace.documentTemplates.filter(
+                        (d) => d.id !== t.id
+                      ),
+                    };
+                    void save(next);
+                  }}
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {editingTemplate ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!templateName.trim() || !workspace) return;
+                const next: DocumentTemplate = {
+                  id: editingTemplate.id,
+                  name: templateName.trim(),
+                  category: templateCategory.trim() || undefined,
+                  requiredByDefault: false,
+                  createdAt: editingTemplate.createdAt,
+                  updatedAt: new Date().toISOString(),
+                };
+                const exists = workspace.documentTemplates.some(
+                  (d) => d.id === next.id
+                );
+                const nextWs = {
+                  ...workspace,
+                  documentTemplates: exists
+                    ? workspace.documentTemplates.map((d) =>
+                        d.id === next.id ? next : d
+                      )
+                    : [...workspace.documentTemplates, next],
+                };
+                void save(nextWs);
+                setEditingTemplate(null);
+                setTemplateName("");
+                setTemplateCategory("");
+              }}
+              className="mt-4 space-y-3 rounded-lg border border-black/10 bg-white p-4"
+            >
+              <input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Document name (e.g. Passport, Transcripts)"
+                required
+                className="w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+              <input
+                value={templateCategory}
+                onChange={(e) => setTemplateCategory(e.target.value)}
+                placeholder="Category (optional, e.g. Identity, Academic)"
+                className="w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
+                >
+                  {saving ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingTemplate(null);
+                    setTemplateName("");
+                    setTemplateCategory("");
+                  }}
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setEditingTemplate({
+                  id: crypto.randomUUID(),
+                  name: "",
+                  category: "",
+                  requiredByDefault: false,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                });
+                setTemplateName("");
+                setTemplateCategory("");
+              }}
+              className="mt-4 rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+            >
+              Add document template
+            </button>
+          )}
         </div>
       ) : null}
     </div>

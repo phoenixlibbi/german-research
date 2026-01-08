@@ -69,6 +69,9 @@ export function UniversitiesClient() {
       name: "",
       city: "",
       website: "",
+      degreeTitle: "",
+      durationSemesters: undefined,
+      requiredDocumentIds: [],
       notes: "",
       fields: {},
       createdAt: nowIso(),
@@ -91,7 +94,17 @@ export function UniversitiesClient() {
 
     const city = String(form.get("city") ?? "").trim();
     const website = String(form.get("website") ?? "").trim();
+    const degreeTitle = String(form.get("degreeTitle") ?? "").trim();
+    const durationSemesters = parseNumberOrNull(String(form.get("durationSemesters") ?? ""));
     const notes = String(form.get("notes") ?? "").trim();
+
+    // Collect checked document IDs
+    const checkedDocs: string[] = [];
+    for (const [key, value] of form.entries()) {
+      if (key.startsWith("doc:") && value === "on") {
+        checkedDocs.push(key.replace("doc:", ""));
+      }
+    }
 
     const fields: University["fields"] = {};
     for (const def of uniFields) {
@@ -111,6 +124,9 @@ export function UniversitiesClient() {
       name,
       city: city || undefined,
       website: website || undefined,
+      degreeTitle: degreeTitle || undefined,
+      durationSemesters: durationSemesters || undefined,
+      requiredDocumentIds: checkedDocs,
       notes: notes || undefined,
       fields,
       updatedAt: nowIso(),
@@ -249,7 +265,53 @@ export function UniversitiesClient() {
                   className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
                 />
               </label>
+
+              <label className="block">
+                <div className="text-sm font-medium text-black">Degree title</div>
+                <input
+                  name="degreeTitle"
+                  defaultValue={editing.degreeTitle ?? ""}
+                  placeholder="e.g. Master of Science in Computer Science"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
+
+              <label className="block">
+                <div className="text-sm font-medium text-black">Duration (semesters)</div>
+                <input
+                  name="durationSemesters"
+                  type="number"
+                  min="1"
+                  defaultValue={editing.durationSemesters ?? ""}
+                  placeholder="e.g. 4"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
             </div>
+
+            {ws.documentTemplates.length > 0 ? (
+              <div className="rounded-2xl border border-black/10 bg-white p-4">
+                <div className="text-sm font-semibold text-black">
+                  Required documents
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {ws.documentTemplates.map((doc) => (
+                    <label
+                      key={doc.id}
+                      className="flex items-center gap-2 rounded-xl border border-black/20 bg-white px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        name={`doc:${doc.id}`}
+                        defaultChecked={editing.requiredDocumentIds?.includes(doc.id) ?? false}
+                        className="h-4 w-4 accent-black"
+                      />
+                      <span className="text-sm text-black">{doc.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {uniFields.length ? (
               <div className="rounded-2xl border border-black/10 bg-white p-4">

@@ -35,6 +35,9 @@ export type University = {
   name: string;
   city?: string;
   website?: string;
+  degreeTitle?: string;
+  durationSemesters?: number;
+  requiredDocumentIds: UUID[]; // IDs from documentTemplates
   notes?: string;
   fields: Record<string, string | number | boolean | null>;
   createdAt: string;
@@ -108,10 +111,9 @@ export type ApplicationDocument = {
 
 export type Target = {
   id: UUID;
-  title: string;
-  type: "string" | "number" | "date" | "boolean";
-  value: string; // stored as string for simplicity
-  notes?: string;
+  name: string;
+  description?: string;
+  targetDate?: string; // YYYY-MM-DD
   createdAt: string;
   updatedAt: string;
 };
