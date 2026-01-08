@@ -65,6 +65,7 @@ function normalizeWorkspace(raw: unknown): Workspace {
     applicationDocuments: r.applicationDocuments ?? [],
     uploads: (r.uploads ?? []).map((d) => ({
       ...(d as any),
+      templateId: (d as any).templateId,
       displayName:
         (d as any).displayName ?? (d as any).originalName ?? "Untitled",
       createdAt: (d as any).createdAt ?? baseNow,

@@ -2,6 +2,7 @@ export type UUID = string;
 
 export type UploadedDoc = {
   id: UUID;
+  templateId?: UUID; // Link to document template
   displayName: string;
   originalName: string;
   storedName: string;

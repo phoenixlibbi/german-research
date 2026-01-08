@@ -21,12 +21,29 @@ export async function POST(request: Request) {
   const file = form.get("file");
   const displayName = String(form.get("displayName") ?? "").trim();
   const notes = String(form.get("notes") ?? "").trim() || undefined;
+  const templateId = String(form.get("templateId") ?? "").trim() || undefined;
 
   if (!(file instanceof File)) {
     return NextResponse.json(
       { error: "Missing file (field name must be 'file')." },
       { status: 400 },
     );
+  }
+
+  const ws = await loadWorkspace();
+  
+  // If templateId is provided, delete any existing upload for that template
+  if (templateId) {
+    const existing = ws.uploads.find((u) => u.templateId === templateId);
+    if (existing) {
+      ws.uploads = ws.uploads.filter((u) => u.id !== existing.id);
+      try {
+        const storedPath = path.join(getUploadsDir(), existing.storedName);
+        await unlink(storedPath);
+      } catch {
+        // If it's already deleted, that's fine.
+      }
+    }
   }
 
   const id = randomId();
@@ -38,10 +55,10 @@ export async function POST(request: Request) {
   const buf = Buffer.from(await file.arrayBuffer());
   await writeFile(storedPath, buf);
 
-  const ws = await loadWorkspace();
   const now = new Date().toISOString();
   ws.uploads.unshift({
     id,
+    templateId,
     displayName: displayName || file.name,
     originalName: file.name,
     storedName,
