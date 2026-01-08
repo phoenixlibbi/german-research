@@ -29,7 +29,7 @@ export function UniversitiesClient() {
 
   if (loading || !workspace) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-300">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/70">
         Loading…
       </div>
     );
@@ -122,11 +122,11 @@ export function UniversitiesClient() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-xl font-semibold">Universities</div>
-            <div className="mt-2 text-sm text-slate-300">
+            <div className="mt-2 text-sm text-black/70">
               Table view + add/update universities. Custom fields come from{" "}
               <span className="font-medium">Admin</span>.
             </div>
@@ -134,23 +134,23 @@ export function UniversitiesClient() {
           <button
             type="button"
             onClick={startCreate}
-            className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+            className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
           >
             Add university
           </button>
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-lg border border-rose-900/60 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
-            {error}
+          <div className="mt-4 rounded-lg border border-black/20 bg-black/5 px-3 py-2 text-sm text-black">
+            <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60">
+      <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-800 text-xs uppercase tracking-wide text-slate-400">
+            <thead className="border-b border-black/10 text-xs uppercase tracking-wide text-black/60">
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">City</th>
@@ -159,21 +159,21 @@ export function UniversitiesClient() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-black/10">
               {universities.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-4 text-slate-300" colSpan={5}>
+                  <td className="px-4 py-4 text-black/70" colSpan={5}>
                     No universities yet. Click “Add university”.
                   </td>
                 </tr>
               ) : (
                 universities.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-900/30">
-                    <td className="px-4 py-3 font-medium text-slate-100">
+                  <tr key={u.id} className="hover:bg-black/5">
+                    <td className="px-4 py-3 font-semibold text-black">
                       {u.name}
                     </td>
-                    <td className="px-4 py-3 text-slate-300">{u.city ?? ""}</td>
-                    <td className="px-4 py-3 text-slate-300">
+                    <td className="px-4 py-3 text-black/70">{u.city ?? ""}</td>
+                    <td className="px-4 py-3 text-black/70">
                       {u.website ? (
                         <a href={u.website} target="_blank" rel="noreferrer">
                           {u.website}
@@ -182,7 +182,7 @@ export function UniversitiesClient() {
                         ""
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-400">
+                    <td className="px-4 py-3 text-black/60">
                       {new Date(u.updatedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -190,7 +190,7 @@ export function UniversitiesClient() {
                         <button
                           type="button"
                           onClick={() => startEdit(u)}
-                          className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
                         >
                           Update
                         </button>
@@ -198,7 +198,7 @@ export function UniversitiesClient() {
                           type="button"
                           disabled={saving}
                           onClick={() => void deleteUniversity(u.id)}
-                          className="rounded-xl border border-rose-900/60 bg-rose-950/30 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50 disabled:opacity-60"
+                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
                         >
                           Delete
                         </button>
@@ -213,7 +213,7 @@ export function UniversitiesClient() {
       </div>
 
       {editing ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+        <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
           <div className="text-lg font-semibold">
             {creating ? "Add university" : "Update university"}
           </div>
@@ -221,39 +221,39 @@ export function UniversitiesClient() {
           <form onSubmit={submitForm} className="mt-4 space-y-4">
             <div className="grid gap-3 md:grid-cols-2">
               <label className="block">
-                <div className="text-sm font-medium text-slate-200">Name</div>
+                <div className="text-sm font-medium text-black">Name</div>
                 <input
                   name="name"
                   defaultValue={editing.name}
                   required
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
                 />
               </label>
 
               <label className="block">
-                <div className="text-sm font-medium text-slate-200">City</div>
+                <div className="text-sm font-medium text-black">City</div>
                 <input
                   name="city"
                   defaultValue={editing.city ?? ""}
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
                 />
               </label>
 
               <label className="block md:col-span-2">
-                <div className="text-sm font-medium text-slate-200">Website</div>
+                <div className="text-sm font-medium text-black">Website</div>
                 <input
                   name="website"
                   type="url"
                   defaultValue={editing.website ?? ""}
                   placeholder="https://…"
-                  className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
                 />
               </label>
             </div>
 
             {uniFields.length ? (
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
-                <div className="text-sm font-semibold text-slate-100">
+              <div className="rounded-2xl border border-black/10 bg-white p-4">
+                <div className="text-sm font-semibold text-black">
                   Custom fields
                 </div>
                 <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -269,12 +269,12 @@ export function UniversitiesClient() {
             ) : null}
 
             <label className="block">
-              <div className="text-sm font-medium text-slate-200">Notes</div>
+              <div className="text-sm font-medium text-black">Notes</div>
               <textarea
                 name="notes"
                 defaultValue={editing.notes ?? ""}
                 rows={3}
-                className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
               />
             </label>
 
@@ -282,14 +282,14 @@ export function UniversitiesClient() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
               >
                 {saving ? "Saving…" : "Save"}
               </button>
               <button
                 type="button"
                 onClick={() => setEditing(null)}
-                className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+                className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
               >
                 Cancel
               </button>
@@ -310,14 +310,14 @@ function CustomFieldInput({
 }) {
   if (def.type === "boolean") {
     return (
-      <label className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2">
+      <label className="flex items-center gap-2 rounded-xl border border-black/20 bg-white px-3 py-2">
         <input
           name={`field:${def.key}`}
           type="checkbox"
           defaultChecked={Boolean(defaultValue)}
-          className="h-4 w-4 accent-indigo-500"
+          className="h-4 w-4 accent-black"
         />
-        <span className="text-sm text-slate-200">{def.label}</span>
+        <span className="text-sm text-black">{def.label}</span>
       </label>
     );
   }
@@ -325,12 +325,12 @@ function CustomFieldInput({
   if (def.type === "number") {
     return (
       <label className="block">
-        <div className="text-sm font-medium text-slate-200">{def.label}</div>
+        <div className="text-sm font-medium text-black">{def.label}</div>
         <input
           name={`field:${def.key}`}
           type="number"
           defaultValue={typeof defaultValue === "number" ? defaultValue : ""}
-          className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+          className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
         />
       </label>
     );
@@ -339,12 +339,12 @@ function CustomFieldInput({
   if (def.type === "date") {
     return (
       <label className="block">
-        <div className="text-sm font-medium text-slate-200">{def.label}</div>
+        <div className="text-sm font-medium text-black">{def.label}</div>
         <input
           name={`field:${def.key}`}
           type="date"
           defaultValue={typeof defaultValue === "string" ? defaultValue : ""}
-          className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+          className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
         />
       </label>
     );
@@ -353,12 +353,12 @@ function CustomFieldInput({
   if (def.type === "text") {
     return (
       <label className="block md:col-span-2">
-        <div className="text-sm font-medium text-slate-200">{def.label}</div>
+        <div className="text-sm font-medium text-black">{def.label}</div>
         <textarea
           name={`field:${def.key}`}
           defaultValue={typeof defaultValue === "string" ? defaultValue : ""}
           rows={3}
-          className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+          className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
         />
       </label>
     );
@@ -366,12 +366,12 @@ function CustomFieldInput({
 
   return (
     <label className="block">
-      <div className="text-sm font-medium text-slate-200">{def.label}</div>
+      <div className="text-sm font-medium text-black">{def.label}</div>
       <input
         name={`field:${def.key}`}
         type={def.type === "url" ? "url" : "text"}
         defaultValue={typeof defaultValue === "string" ? defaultValue : ""}
-        className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+        className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
       />
     </label>
   );

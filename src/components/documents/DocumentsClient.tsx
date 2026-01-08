@@ -128,23 +128,23 @@ export function DocumentsClient() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-xl font-semibold">Uploaded documents</div>
-            <div className="mt-2 text-sm text-slate-300">
+            <div className="mt-2 text-sm text-black/70">
               Files are saved locally in <span className="font-medium">data/uploads/</span>{" "}
               and are ignored by git (not pushed to GitHub).
             </div>
           </div>
-          <div className="text-sm text-slate-300">
+          <div className="text-sm text-black/70">
             {items.length} files • {formatBytes(totalSize)}
           </div>
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-lg border border-rose-900/60 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
-            {error}
+          <div className="mt-4 rounded-lg border border-black/20 bg-black/5 px-3 py-2 text-sm text-black">
+            <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
 
@@ -154,42 +154,42 @@ export function DocumentsClient() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Document name (optional) — e.g. 'Passport Scan', 'Transcript Sem 1-8'"
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+            className="w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
           />
           <input
             name="file"
             type="file"
-            className="block w-full text-sm text-slate-200 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-100 hover:file:bg-slate-800"
+            className="block w-full text-sm text-black file:mr-4 file:rounded-xl file:border file:border-black/20 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black hover:file:bg-black/5"
           />
           <input
             name="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes (optional) — e.g. 'Original transcript PDF'"
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+            className="w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
           />
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-xl bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+            className="w-full rounded-xl bg-black px-3 py-2.5 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
           >
             {busy ? "Working..." : "Upload"}
           </button>
         </form>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-2">
+      <div className="rounded-2xl border border-black/10 bg-white p-2 shadow-sm">
         {items.length === 0 ? (
-          <div className="p-4 text-sm text-slate-300">No uploads yet.</div>
+          <div className="p-4 text-sm text-black/70">No uploads yet.</div>
         ) : (
-          <ul className="divide-y divide-slate-800">
+          <ul className="divide-y divide-black/10">
             {items.map((doc) => (
               <li key={doc.id} className="flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-slate-100">
+                  <div className="truncate text-sm font-semibold text-black">
                     {doc.displayName || doc.originalName}
                   </div>
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div className="mt-1 text-xs text-black/60">
                     {new Date(doc.createdAt).toLocaleString()} •{" "}
                     {formatBytes(doc.size)}
                     {doc.notes ? ` • ${doc.notes}` : ""}
@@ -199,7 +199,7 @@ export function DocumentsClient() {
                   </div>
                 </div>
                 <a
-                  className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-900"
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
                   href={`/api/uploads/${encodeURIComponent(doc.id)}`}
                 >
                   Download
@@ -212,7 +212,7 @@ export function DocumentsClient() {
                     setDisplayName(doc.displayName ?? "");
                     setNotes(doc.notes ?? "");
                   }}
-                  className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900 disabled:opacity-60"
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
                 >
                   Update
                 </button>
@@ -220,7 +220,7 @@ export function DocumentsClient() {
                   type="button"
                   disabled={busy}
                   onClick={() => void onDelete(doc.id)}
-                  className="rounded-xl border border-rose-900/60 bg-rose-950/30 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50 disabled:opacity-60"
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
                 >
                   Delete
                 </button>
@@ -231,9 +231,9 @@ export function DocumentsClient() {
       </div>
 
       {editing ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+        <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
           <div className="text-lg font-semibold">Update document</div>
-          <div className="mt-2 text-sm text-slate-300">
+          <div className="mt-2 text-sm text-black/70">
             Update display name / notes (the file stays the same).
           </div>
 
@@ -242,19 +242,19 @@ export function DocumentsClient() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Document name"
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             />
             <input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Notes"
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             />
             <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
                 disabled={busy}
-                className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
               >
                 {busy ? "Saving…" : "Save"}
               </button>
@@ -265,7 +265,7 @@ export function DocumentsClient() {
                   setDisplayName("");
                   setNotes("");
                 }}
-                className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+                className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
               >
                 Cancel
               </button>

@@ -26,7 +26,7 @@ export function AdminClient() {
 
   if (loading || !workspace) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-300">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/70">
         Loading…
       </div>
     );
@@ -100,49 +100,49 @@ export function AdminClient() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <div className="text-xl font-semibold">Admin</div>
-        <div className="mt-2 text-sm text-slate-300">
+        <div className="mt-2 text-sm text-black/70">
           Define custom fields you want to track per university (IELTS, VPD, degree duration,
           admission dates, etc). These fields will appear in the University add/edit form.
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-lg border border-rose-900/60 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
-            {error}
+          <div className="mt-4 rounded-lg border border-black/20 bg-black/5 px-3 py-2 text-sm text-black">
+            <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
 
         <div className="mt-6 grid gap-3 md:grid-cols-3">
           <label className="block">
-            <div className="text-sm font-medium text-slate-200">Label</div>
+            <div className="text-sm font-medium text-black">Label</div>
             <input
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="e.g. IELTS overall"
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             />
           </label>
 
           <label className="block">
-            <div className="text-sm font-medium text-slate-200">Key</div>
+            <div className="text-sm font-medium text-black">Key</div>
             <input
               value={key}
               onChange={(e) => setKey(e.target.value)}
               placeholder={keySuggestion || "e.g. ielts_overall"}
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             />
-            <div className="mt-1 text-xs text-slate-400">
+            <div className="mt-1 text-xs text-black/60">
               Stored in JSON. Use letters/numbers/underscore.
             </div>
           </label>
 
           <label className="block">
-            <div className="text-sm font-medium text-slate-200">Type</div>
+            <div className="text-sm font-medium text-black">Type</div>
             <select
               value={type}
               onChange={(e) => setType(e.target.value as FieldType)}
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             >
               <option value="string">string</option>
               <option value="text">text</option>
@@ -158,28 +158,28 @@ export function AdminClient() {
           type="button"
           disabled={saving || !label.trim()}
           onClick={() => void addField()}
-          className="mt-4 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+          className="mt-4 rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
         >
           {saving ? "Saving…" : "Add field"}
         </button>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <div className="text-lg font-semibold">Calendar mapping</div>
-        <div className="mt-2 text-sm text-slate-300">
+        <div className="mt-2 text-sm text-black/70">
           Choose which university fields represent <span className="font-medium">start</span> and{" "}
           <span className="font-medium">end</span> dates for the calendar page.
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <label className="block">
-            <div className="text-sm font-medium text-slate-200">Start date field</div>
+            <div className="text-sm font-medium text-black">Start date field</div>
             <select
               value={startKey ?? ""}
               onChange={(e) =>
                 void setCalendarMapping(e.target.value || null, endKey)
               }
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             >
               <option value="">(none)</option>
               {fields
@@ -193,13 +193,13 @@ export function AdminClient() {
           </label>
 
           <label className="block">
-            <div className="text-sm font-medium text-slate-200">End date field</div>
+            <div className="text-sm font-medium text-black">End date field</div>
             <select
               value={endKey ?? ""}
               onChange={(e) =>
                 void setCalendarMapping(startKey, e.target.value || null)
               }
-              className="mt-2 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none ring-indigo-500/40 focus:ring-2"
+              className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
             >
               <option value="">(none)</option>
               {fields
@@ -214,18 +214,18 @@ export function AdminClient() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-2">
+      <div className="rounded-2xl border border-black/10 bg-white p-2 shadow-sm">
         {fields.length === 0 ? (
-          <div className="p-4 text-sm text-slate-300">No custom fields yet.</div>
+          <div className="p-4 text-sm text-black/70">No custom fields yet.</div>
         ) : (
-          <ul className="divide-y divide-slate-800">
+          <ul className="divide-y divide-black/10">
             {fields.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-slate-100">
+                  <div className="truncate text-sm font-semibold text-black">
                     {f.label}
                   </div>
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div className="mt-1 text-xs text-black/60">
                     key: <span className="font-medium">{f.key}</span> • type:{" "}
                     <span className="font-medium">{f.type}</span>
                   </div>
@@ -234,7 +234,7 @@ export function AdminClient() {
                   type="button"
                   disabled={saving}
                   onClick={() => void removeField(f.id)}
-                  className="rounded-xl border border-rose-900/60 bg-rose-950/30 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50 disabled:opacity-60"
+                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
                 >
                   Remove
                 </button>

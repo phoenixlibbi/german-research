@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
+/* Monochrome theme: black & white only */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
 }
 
 @theme inline {
@@ -12,13 +13,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -26,9 +20,9 @@ body {
 
 /* Slightly nicer defaults */
 * {
-  @apply selection:bg-indigo-500/20 selection:text-slate-950;
+  @apply selection:bg-black selection:text-white;
 }
 
 a {
-  @apply text-indigo-300 hover:text-indigo-200;
+  @apply text-black underline underline-offset-4 hover:opacity-80;
 }

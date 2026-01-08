@@ -84,7 +84,7 @@ export function CalendarClient() {
 
   if (loading || !workspace) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 text-sm text-slate-300">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/70">
         Loading…
       </div>
     );
@@ -95,11 +95,11 @@ export function CalendarClient() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-xl font-semibold">Calendar</div>
-            <div className="mt-2 text-sm text-slate-300">
+            <div className="mt-2 text-sm text-black/70">
               Shows all universities’ start/end dates based on Admin mapping.
               {startMapped || endMapped ? (
                 <>
@@ -121,21 +121,21 @@ export function CalendarClient() {
             <button
               type="button"
               onClick={() => setCursor((d) => addMonths(d, -1))}
-              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
             >
               Prev
             </button>
             <button
               type="button"
               onClick={() => setCursor(new Date())}
-              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
             >
               Today
             </button>
             <button
               type="button"
               onClick={() => setCursor((d) => addMonths(d, 1))}
-              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900"
+              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
             >
               Next
             </button>
@@ -143,18 +143,18 @@ export function CalendarClient() {
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-lg border border-rose-900/60 bg-rose-950/40 px-3 py-2 text-sm text-rose-200">
-            {error}
+          <div className="mt-4 rounded-lg border border-black/20 bg-black/5 px-3 py-2 text-sm text-black">
+            <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-        <div className="mb-3 text-sm font-semibold text-slate-100">
+      <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+        <div className="mb-3 text-sm font-semibold text-black">
           {format(cursor, "MMMM yyyy")}
         </div>
 
-        <div className="grid grid-cols-7 gap-2 text-xs text-slate-400">
+        <div className="grid grid-cols-7 gap-2 text-xs text-black/60">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
             <div key={d} className="px-1 py-1">
               {d}
@@ -173,16 +173,16 @@ export function CalendarClient() {
                 key={day.toISOString()}
                 className={[
                   "min-h-24 rounded-xl border p-2",
-                  inMonth ? "border-slate-800 bg-slate-950" : "border-slate-900 bg-slate-950/40",
-                  isToday ? "ring-2 ring-indigo-500/40" : "",
+                  inMonth ? "border-black/10 bg-white" : "border-black/10 bg-white",
+                  isToday ? "ring-2 ring-black/20" : "",
                 ].join(" ")}
               >
                 <div className="flex items-center justify-between">
-                  <div className={inMonth ? "text-slate-100" : "text-slate-500"}>
+                  <div className={inMonth ? "text-black" : "text-black/40"}>
                     {format(day, "d")}
                   </div>
                   {dayEvents.length ? (
-                    <div className="text-[10px] text-slate-400">
+                    <div className="text-[10px] text-black/60">
                       {dayEvents.length}
                     </div>
                   ) : null}
@@ -195,8 +195,8 @@ export function CalendarClient() {
                       className={[
                         "truncate rounded-lg px-2 py-1 text-[11px] font-medium",
                         e.kind === "start"
-                          ? "bg-emerald-950/40 text-emerald-200 border border-emerald-900/60"
-                          : "bg-rose-950/30 text-rose-200 border border-rose-900/60",
+                          ? "bg-black/5 text-black border border-black/10"
+                          : "bg-black/10 text-black border border-black/20",
                       ].join(" ")}
                       title={e.title}
                     >
@@ -204,7 +204,7 @@ export function CalendarClient() {
                     </div>
                   ))}
                   {dayEvents.length > 3 ? (
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[11px] text-black/60">
                       +{dayEvents.length - 3} more
                     </div>
                   ) : null}
@@ -215,24 +215,24 @@ export function CalendarClient() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
-        <div className="text-sm font-semibold text-slate-100">All dates</div>
-        <div className="mt-2 text-sm text-slate-300">
+      <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+        <div className="text-sm font-semibold text-black">All dates</div>
+        <div className="mt-2 text-sm text-black/70">
           Tip: add your universities’ dates in the Universities “Custom fields” section.
         </div>
 
         {events.length === 0 ? (
-          <div className="mt-4 text-sm text-slate-300">
+          <div className="mt-4 text-sm text-black/70">
             No start/end dates found yet.
           </div>
         ) : (
-          <ul className="mt-4 divide-y divide-slate-800">
+          <ul className="mt-4 divide-y divide-black/10">
             {events.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-3 py-2">
-                <div className="min-w-0 flex-1 truncate text-sm text-slate-100">
+                <div className="min-w-0 flex-1 truncate text-sm text-black">
                   {e.title}
                 </div>
-                <div className="text-sm text-slate-300">
+                <div className="text-sm text-black/70">
                   {format(e.date, "yyyy-MM-dd")}
                 </div>
               </li>

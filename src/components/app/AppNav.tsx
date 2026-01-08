@@ -21,9 +21,9 @@ export function AppNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
-              "text-slate-300 hover:bg-slate-900 hover:text-slate-100",
-              isActive && "bg-slate-900 text-slate-100",
+              "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold",
+              "text-black/70 hover:bg-black/5 hover:text-black",
+              isActive && "bg-black/10 text-black ring-1 ring-black/10",
             )}
           >
             <Icon className="h-4 w-4" />
