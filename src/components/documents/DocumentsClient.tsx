@@ -294,35 +294,60 @@ export function DocumentsClient() {
           ) : null}
 
           <div className="mt-4 space-y-2">
-            {workspace.documentTemplates.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between rounded-lg border border-black/10 bg-white p-3"
-              >
-                <div>
-                  <div className="text-sm font-medium text-black">{t.name}</div>
-                  {t.category ? (
-                    <div className="text-xs text-black/60">{t.category}</div>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => {
-                    const next = {
-                      ...workspace,
-                      documentTemplates: workspace.documentTemplates.filter(
-                        (d) => d.id !== t.id
-                      ),
-                    };
-                    void save(next);
+            {workspace.documentTemplates.map((t) => {
+              const isCollected = workspace.collectedDocumentIds?.includes(t.id) ?? false;
+              return (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between rounded-lg border border-black/10 p-3"
+                  style={{
+                    backgroundColor: isCollected ? "#000000" : "#ffffff",
+                    color: isCollected ? "#ffffff" : "#000000",
                   }}
-                  className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
                 >
-                  Delete
-                </button>
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => {
+                      const currentIds = workspace.collectedDocumentIds ?? [];
+                      const nextIds = isCollected
+                        ? currentIds.filter((id) => id !== t.id)
+                        : [...currentIds, t.id];
+                      const next = {
+                        ...workspace,
+                        collectedDocumentIds: nextIds,
+                      };
+                      void save(next);
+                    }}
+                    className="flex-1 text-left"
+                  >
+                    <div className="text-sm font-medium">{t.name}</div>
+                    {t.category ? (
+                      <div className="text-xs opacity-70">{t.category}</div>
+                    ) : null}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => {
+                      const next = {
+                        ...workspace,
+                        documentTemplates: workspace.documentTemplates.filter(
+                          (d) => d.id !== t.id
+                        ),
+                        collectedDocumentIds: (workspace.collectedDocumentIds ?? []).filter(
+                          (id) => id !== t.id
+                        ),
+                      };
+                      void save(next);
+                    }}
+                    className="ml-3 rounded-xl border border-current px-3 py-2 text-sm font-semibold opacity-70 hover:opacity-100 disabled:opacity-40"
+                  >
+                    Delete
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           {editingTemplate ? (

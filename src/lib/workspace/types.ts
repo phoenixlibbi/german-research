@@ -133,6 +133,7 @@ export type Workspace = {
   programs: Program[];
   admissionWindows: AdmissionWindow[];
   documentTemplates: DocumentTemplate[];
+  collectedDocumentIds: UUID[]; // Document templates the user has collected
   applications: Application[];
   applicationDocuments: ApplicationDocument[];
   uploads: UploadedDoc[];

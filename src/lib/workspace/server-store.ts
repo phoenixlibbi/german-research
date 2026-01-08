@@ -53,12 +53,14 @@ function normalizeWorkspace(raw: unknown): Workspace {
     universities: (r.universities ?? []).map((u) => ({
       ...(u as any),
       fields: (u as any).fields ?? {},
+      requiredDocumentIds: (u as any).requiredDocumentIds ?? [],
       createdAt: (u as any).createdAt ?? baseNow,
       updatedAt: (u as any).updatedAt ?? baseNow,
     })),
     programs: r.programs ?? [],
     admissionWindows: r.admissionWindows ?? [],
     documentTemplates: r.documentTemplates ?? [],
+    collectedDocumentIds: r.collectedDocumentIds ?? [],
     applications: r.applications ?? [],
     applicationDocuments: r.applicationDocuments ?? [],
     uploads: (r.uploads ?? []).map((d) => ({
@@ -164,6 +166,7 @@ export async function loadWorkspace(): Promise<Workspace> {
           updatedAt: nowIso(),
         },
       ],
+      collectedDocumentIds: [],
       applications: [],
       applicationDocuments: [],
       uploads: [],
