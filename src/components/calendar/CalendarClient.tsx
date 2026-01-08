@@ -16,10 +16,11 @@ import { useWorkspace } from "@/lib/workspace/client";
 
 type CalEvent = {
   id: string;
-  uniId: string;
+  uniId?: string;
+  targetId?: string;
   title: string;
   date: Date;
-  kind: "start" | "end";
+  kind: "start" | "end" | "target";
 };
 
 function parseDateOrNull(v: unknown): Date | null {
@@ -35,6 +36,7 @@ function parseDateOrNull(v: unknown): Date | null {
 export function CalendarClient() {
   const { workspace, loading, error } = useWorkspace();
   const [cursor, setCursor] = useState(() => new Date());
+  const [selectedEvent, setSelectedEvent] = useState<CalEvent | null>(null);
 
   const events = useMemo<CalEvent[]>(() => {
     if (!workspace) return [];
@@ -78,10 +80,10 @@ export function CalendarClient() {
         if (d) {
           out.push({
             id: `target:${t.id}`,
-            uniId: "",
+            targetId: t.id,
             title: `Target: ${t.name}`,
             date: d,
-            kind: "start",
+            kind: "target",
           });
         }
       }
@@ -208,23 +210,35 @@ export function CalendarClient() {
 
                 <div className="mt-2 space-y-1">
                   {dayEvents.slice(0, 3).map((e) => (
-                    <div
+                    <button
                       key={e.id}
+                      type="button"
+                      onClick={() => setSelectedEvent(e)}
                       className={[
-                        "truncate rounded-lg px-2 py-1 text-[11px] font-medium",
+                        "w-full truncate rounded-lg px-2 py-1 text-left text-[11px] font-medium hover:opacity-80",
                         e.kind === "start"
                           ? "bg-black/5 text-black border border-black/10"
-                          : "bg-black/10 text-black border border-black/20",
+                          : e.kind === "end"
+                            ? "bg-black/10 text-black border border-black/20"
+                            : "bg-black/5 text-black border border-black/10",
                       ].join(" ")}
                       title={e.title}
                     >
                       {e.title}
-                    </div>
+                    </button>
                   ))}
                   {dayEvents.length > 3 ? (
-                    <div className="text-[11px] text-black/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Show first event from remaining
+                        const remaining = dayEvents.slice(3);
+                        if (remaining.length > 0) setSelectedEvent(remaining[0]);
+                      }}
+                      className="text-[11px] text-black/60 hover:text-black"
+                    >
                       +{dayEvents.length - 3} more
-                    </div>
+                    </button>
                   ) : null}
                 </div>
               </div>
@@ -247,9 +261,13 @@ export function CalendarClient() {
           <ul className="mt-4 divide-y divide-black/10">
             {events.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-3 py-2">
-                <div className="min-w-0 flex-1 truncate text-sm text-black">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEvent(e)}
+                  className="min-w-0 flex-1 truncate text-left text-sm text-black hover:underline"
+                >
                   {e.title}
-                </div>
+                </button>
                 <div className="text-sm text-black/70">
                   {format(e.date, "yyyy-MM-dd")}
                 </div>
@@ -258,6 +276,179 @@ export function CalendarClient() {
           </ul>
         )}
       </div>
+
+      {selectedEvent ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl border border-black/10 bg-white p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="text-lg font-semibold text-black">
+                  {selectedEvent.title}
+                </div>
+                <div className="mt-1 text-sm text-black/70">
+                  {format(selectedEvent.date, "PPP")}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEvent(null)}
+                className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {selectedEvent.uniId && workspace ? (
+                (() => {
+                  const uni = workspace.universities.find(
+                    (u) => u.id === selectedEvent.uniId
+                  );
+                  if (!uni) return null;
+                  return (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                          University
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-black">
+                          {uni.name}
+                        </div>
+                        {uni.city ? (
+                          <div className="mt-1 text-sm text-black/70">
+                            {uni.city}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {uni.degreeTitle ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Degree
+                          </div>
+                          <div className="mt-1 text-sm text-black">
+                            {uni.degreeTitle}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {uni.durationSemesters ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Duration
+                          </div>
+                          <div className="mt-1 text-sm text-black">
+                            {uni.durationSemesters} semester
+                            {uni.durationSemesters !== 1 ? "s" : ""}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {uni.website ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Website
+                          </div>
+                          <a
+                            href={uni.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 text-sm text-black underline hover:text-black/70"
+                          >
+                            {uni.website}
+                          </a>
+                        </div>
+                      ) : null}
+
+                      {selectedEvent.kind === "start" &&
+                        workspace.admin.calendar.startFieldKey ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Start Date Field
+                          </div>
+                          <div className="mt-1 text-sm text-black">
+                            {workspace.admin.calendar.startFieldKey}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {selectedEvent.kind === "end" &&
+                        workspace.admin.calendar.endFieldKey ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            End Date Field
+                          </div>
+                          <div className="mt-1 text-sm text-black">
+                            {workspace.admin.calendar.endFieldKey}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {uni.notes ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Notes
+                          </div>
+                          <div className="mt-1 text-sm text-black/70 whitespace-pre-wrap">
+                            {uni.notes}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()
+              ) : selectedEvent.targetId && workspace ? (
+                (() => {
+                  const target = workspace.targets.find(
+                    (t) => t.id === selectedEvent.targetId
+                  );
+                  if (!target) return null;
+                  return (
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                          Target
+                        </div>
+                        <div className="mt-1 text-sm font-medium text-black">
+                          {target.name}
+                        </div>
+                      </div>
+
+                      {target.description ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Description
+                          </div>
+                          <div className="mt-1 text-sm text-black/70 whitespace-pre-wrap">
+                            {target.description}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {target.targetDate ? (
+                        <div>
+                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                            Target Date
+                          </div>
+                          <div className="mt-1 text-sm text-black">
+                            {format(parseISO(target.targetDate), "PPP")}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
