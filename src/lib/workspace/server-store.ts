@@ -3,9 +3,14 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import crypto from "crypto";
 import type { AdminSettings, Workspace } from "@/lib/workspace/types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const IS_VERCEL = process.env.VERCEL === "1";
+const BUNDLED_DATA_DIR = path.join(process.cwd(), "data");
+// Vercel/serverless: filesystem is read-only except /tmp.
+// We use /tmp as a best-effort runtime store and seed it from the bundled workspace.json.
+const DATA_DIR = IS_VERCEL ? path.join("/tmp", "germany-uni-tracker") : BUNDLED_DATA_DIR;
 const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
 const WORKSPACE_FILE = path.join(DATA_DIR, "workspace.json");
+const BUNDLED_WORKSPACE_FILE = path.join(BUNDLED_DATA_DIR, "workspace.json");
 
 function nowIso() {
   return new Date().toISOString();
@@ -78,10 +83,28 @@ function normalizeWorkspace(raw: unknown): Workspace {
 
 export async function ensureDataDirs() {
   await mkdir(UPLOADS_DIR, { recursive: true });
+
+  if (IS_VERCEL) {
+    // Seed runtime workspace.json once per warm instance.
+    try {
+      await readFile(WORKSPACE_FILE, "utf8");
+    } catch {
+      try {
+        const seed = await readFile(BUNDLED_WORKSPACE_FILE, "utf8");
+        await writeFile(WORKSPACE_FILE, seed, "utf8");
+      } catch {
+        // If seeding fails, loadWorkspace() will fall back to an empty workspace.
+      }
+    }
+  }
 }
 
 export async function loadWorkspace(): Promise<Workspace> {
-  await ensureDataDirs();
+  try {
+    await ensureDataDirs();
+  } catch {
+    // If we cannot prepare directories (e.g., read-only FS), fall back below.
+  }
 
   try {
     const raw = await readFile(WORKSPACE_FILE, "utf8");
@@ -175,7 +198,11 @@ export async function loadWorkspace(): Promise<Workspace> {
       notes: [],
     });
 
-    await saveWorkspace(empty);
+    try {
+      await saveWorkspace(empty);
+    } catch {
+      // Non-fatal on serverless/read-only environments.
+    }
     return empty;
   }
 }
