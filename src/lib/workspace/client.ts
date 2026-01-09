@@ -8,6 +8,7 @@ export function useWorkspace() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [readOnly, setReadOnly] = useState(false);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -15,6 +16,7 @@ export function useWorkspace() {
     try {
       const res = await fetch("/api/workspace", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load workspace");
+      setReadOnly(res.headers.get("x-workspace-readonly") === "1");
       const ws = (await res.json()) as Workspace;
       setWorkspace(ws);
     } catch (e) {
@@ -30,6 +32,10 @@ export function useWorkspace() {
 
   const save = useCallback(async (next: Workspace): Promise<boolean> => {
     setError(null);
+    if (readOnly) {
+      setError("Read-only on deployed site");
+      return false;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/workspace", {
@@ -46,11 +52,11 @@ export function useWorkspace() {
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [readOnly]);
 
   return useMemo(
-    () => ({ workspace, setWorkspace, refresh, save, loading, saving, error }),
-    [workspace, refresh, save, loading, saving, error],
+    () => ({ workspace, setWorkspace, refresh, save, loading, saving, error, readOnly }),
+    [workspace, refresh, save, loading, saving, error, readOnly],
   );
 }
 

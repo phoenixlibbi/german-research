@@ -31,7 +31,7 @@ function formatDateCell(v: unknown) {
 }
 
 export function UniversitiesClient() {
-  const { workspace, loading, saving, error, save } = useWorkspace();
+  const { workspace, loading, saving, error, save, readOnly } = useWorkspace();
   const [editing, setEditing] = useState<University | null>(null);
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<University | null>(null);
@@ -196,14 +196,21 @@ export function UniversitiesClient() {
               Table view + add/update universities. Custom fields come from{" "}
               <span className="font-medium">Admin</span>.
             </div>
+            {readOnly ? (
+              <div className="mt-2 text-xs text-black/60">
+                Deployed site is read-only (view only).
+              </div>
+            ) : null}
           </div>
-          <button
-            type="button"
-            onClick={startCreate}
-            className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
-          >
-            Add university
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              onClick={startCreate}
+              className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
+            >
+              Add university
+            </button>
+          ) : null}
         </div>
 
         {error ? (
@@ -314,21 +321,25 @@ export function UniversitiesClient() {
                         >
                           View
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => startEdit(u)}
-                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
-                        >
-                          Update
-                        </button>
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() => void deleteUniversity(u.id)}
-                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
-                        >
-                          Delete
-                        </button>
+                        {!readOnly ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(u)}
+                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                            >
+                              Update
+                            </button>
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => void deleteUniversity(u.id)}
+                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
