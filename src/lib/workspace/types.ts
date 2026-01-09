@@ -38,6 +38,10 @@ export type University = {
   website?: string;
   degreeTitle?: string;
   durationSemesters?: number;
+  // Fee (store as number; UI currently assumes EUR)
+  tuitionFeePerSemester?: number;
+  // Tests / language requirements
+  germanLanguageTestRequired?: boolean;
   requiredDocumentIds: UUID[]; // IDs from documentTemplates
   notes?: string;
   fields: Record<string, string | number | boolean | null>;

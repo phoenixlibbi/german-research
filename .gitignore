@@ -33,8 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# local data (JSON + uploaded docs) - keep private, don't commit
-/data/
+# local data
+# - We keep uploads ignored (can be large / private)
+# - We DO commit workspace.json so the app has data on deploy (per request)
+/data/*
+!/data/workspace.json
+!/data/uploads/
+!/data/uploads/.gitkeep
 
 # vercel
 .vercel

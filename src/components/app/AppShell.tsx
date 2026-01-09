@@ -11,7 +11,7 @@ export function AppShell({
 }) {
   return (
     <div className="min-h-dvh bg-white">
-      <div className="mx-auto flex w-full max-w-7xl gap-6 px-4 py-6">
+      <div className="flex w-full gap-6 px-4 py-6">
         <aside className="hidden w-64 shrink-0 lg:block">
           <div className="sticky top-6 rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
             <div className="mb-4">

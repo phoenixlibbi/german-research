@@ -1,0 +1,497 @@
+{
+  "version": 1,
+  "admin": {
+    "universityFields": [
+      {
+        "id": "0948fbc2-8185-4396-a6a4-f2cf40303cd9",
+        "key": "admission_start",
+        "label": "Admission start",
+        "type": "date"
+      },
+      {
+        "id": "de118729-51a3-4e5f-ba06-d87ae53ff3a1",
+        "key": "admission_end",
+        "label": "Admission end",
+        "type": "date"
+      },
+      {
+        "id": "8ea1893d-c468-4ca8-a5ea-96794a01c932",
+        "key": "ielts_overall",
+        "label": "IELTS overall",
+        "type": "number"
+      },
+      {
+        "id": "ba91e382-e822-424e-bfe7-d4dabc675315",
+        "key": "ielts_min_band",
+        "label": "IELTS min band",
+        "type": "number"
+      },
+      {
+        "id": "6271a459-26e2-4071-b496-f88fd614a41b",
+        "key": "vpd_required",
+        "label": "VPD required",
+        "type": "boolean"
+      },
+      {
+        "id": "eeff1334-cc75-4514-b283-0991db4f1de5",
+        "key": "degree_duration_months",
+        "label": "Degree duration (months)",
+        "type": "number"
+      },
+      {
+        "id": "222ec969-8d12-40fc-8a01-c30f91815ef5",
+        "key": "required_documents",
+        "label": "Required documents",
+        "type": "text"
+      }
+    ],
+    "calendar": {
+      "startFieldKey": "admission_start",
+      "endFieldKey": "admission_end"
+    }
+  },
+  "universities": [
+    {
+      "id": "37edd2be-040d-444c-9283-7dbe03911beb",
+      "name": "THI",
+      "city": "Ingolstadt",
+      "website": "https://www.thi.de/elektro-und-informationstechnik/studiengaenge/ai-engineering-of-autonomous-systems-meng/",
+      "degreeTitle": "AI Engineering of Autonomous Systems",
+      "durationSemesters": 1,
+      "requiredDocumentIds": [],
+      "notes": "Area of study\nAutomation Technology\nVehicle Engineering\nArtificial Intelligence\nFocus\nData Engineering, Machine Perception, Systems Engineering, Systems Simulation, Computing and Connectivity Technologies, Sensor Networks Technologies, Sensor Data Fusion",
+      "fields": {
+        "admission_start": "2026-05-02",
+        "admission_end": "2026-07-15",
+        "ielts_overall": null,
+        "ielts_min_band": null,
+        "vpd_required": false,
+        "degree_duration_months": null,
+        "required_documents": null
+      },
+      "createdAt": "2026-01-09T20:57:58.188Z",
+      "updatedAt": "2026-01-09T21:05:46.991Z"
+    },
+    {
+      "id": "5cfb3cd3-d921-49ad-93b1-d7eec52703d4",
+      "name": "THD",
+      "city": "Cham",
+      "website": "https://www.th-deg.de/dm-m",
+      "degreeTitle": "Applied Artificial Intelligence for Digital Production Management",
+      "durationSemesters": 3,
+      "tuitionFeePerSemester": 82,
+      "requiredDocumentIds": [],
+      "notes": "- Completion of an undergraduate degree course at a German or international university worth at least 210 ECTS credits from the fields of Industrial Engineering, Production Engineering, Mechatronics or a related degree course or a certificate that is equivalent to such a certificate of academic degree. - Therefore, applicants who have obtained their academic qualifications (e.g. Bachelor’s degree) in non-member states of the Lisbon Convention in particular are advised to attach a GATE or GRE (general) certificate as well as a recognised German language certificate to their application in order to substantiate their suitability for the degree course. - In addition, it may be necessary to demonstrate the applicant’s aptitude for this degree course in an aptitude procedure.",
+      "fields": {
+        "admission_start": "2026-04-15",
+        "admission_end": "2026-06-15",
+        "ielts_overall": null,
+        "ielts_min_band": null,
+        "vpd_required": false,
+        "degree_duration_months": null,
+        "required_documents": null
+      },
+      "createdAt": "2026-01-09T21:07:53.464Z",
+      "updatedAt": "2026-01-09T21:15:34.592Z"
+    },
+    {
+      "id": "114468b0-6b51-427f-86f1-e031e07326dd",
+      "name": "Georg-August University",
+      "city": "Göttingen",
+      "website": "https://www.uni-goettingen.de/de/643211.html",
+      "degreeTitle": "Applied Data Science",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 421,
+      "germanLanguageTestRequired": true,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": null,
+        "admission_end": "2026-05-01",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:23:42.193Z",
+      "updatedAt": "2026-01-09T21:27:06.807Z"
+    },
+    {
+      "id": "b94435be-51d9-41e4-9b31-307b276b5658",
+      "name": "Brandenburg University of Technology Cottbus-Senftenberg",
+      "city": "Cottbus",
+      "website": "https://www.b-tu.de/en/",
+      "degreeTitle": "Artificial Intelligence",
+      "durationSemesters": 4,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": null,
+        "admission_end": null,
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:36:52.611Z",
+      "updatedAt": "2026-01-09T21:45:32.663Z"
+    },
+    {
+      "id": "4e999325-1b07-432b-bf35-898757d90ad5",
+      "name": "Saarland University",
+      "city": "Saarland",
+      "website": "https://www.uni-saarland.de/en/home.html",
+      "degreeTitle": "Data Science and Artificial Intelligence",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 280,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": null,
+        "admission_end": null,
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:45:36.604Z",
+      "updatedAt": "2026-01-09T21:48:58.128Z"
+    },
+    {
+      "id": "907eddc4-5b5b-4f91-9474-921a029c827c",
+      "name": "FAU Erlangen-Nürnberg",
+      "city": "Erlangen",
+      "website": "https://www.fau.de/",
+      "degreeTitle": "Artificial Intelligence",
+      "durationSemesters": 4,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": "2026-02-15",
+        "admission_end": "2026-05-31",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:49:42.478Z",
+      "updatedAt": "2026-01-09T21:51:43.237Z"
+    },
+    {
+      "id": "18380329-99c4-4649-95d5-9f3dbfbc1192",
+      "name": "Deggendorf Institute of Technology",
+      "city": "Deggendorf",
+      "website": "https://www.th-deg.de/",
+      "degreeTitle": "MSc Artificial Intelligence and Data Science",
+      "durationSemesters": 2,
+      "tuitionFeePerSemester": 81.95,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": null,
+        "admission_end": null,
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:54:15.553Z",
+      "updatedAt": "2026-01-09T21:55:41.660Z"
+    },
+    {
+      "id": "28597a6f-8d5c-4b95-a3bc-5f14019bf1d1",
+      "name": "Heinrich Heine University Düsseldorf",
+      "city": "Düsseldorf",
+      "website": "https://www.hhu.de/",
+      "degreeTitle": "Artificial Intelligence and Data Science",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 299.97,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": null,
+        "admission_end": "2026-07-15",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:55:45.181Z",
+      "updatedAt": "2026-01-09T21:58:37.144Z"
+    },
+    {
+      "id": "3b3570d7-0b59-401b-a672-40067dab60ef",
+      "name": "University of Regensburg",
+      "city": "Regensburg",
+      "website": "https://www.uni-regensburg.de/",
+      "degreeTitle": "Human-Centred Artificial Intelligence",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 200,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "notes": "Application deadline\n1 June\n\nNon-EU applicants are strongly advised to apply by 1 May at the latest in order to be able to apply for a visa as soon as possible if they are admitted.",
+      "fields": {
+        "admission_start": "2026-05-01",
+        "admission_end": "2026-06-01",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T21:58:39.913Z",
+      "updatedAt": "2026-01-09T22:01:11.300Z"
+    },
+    {
+      "id": "34687813-65d6-4d95-8c48-7b896dd888a2",
+      "name": "University of Technology Nuremberg",
+      "city": "Nuremberg",
+      "website": "https://www.utn.de/en/",
+      "degreeTitle": "Human and Artificial Intelligence",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 72,
+      "germanLanguageTestRequired": true,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": "2026-03-01",
+        "admission_end": "2026-05-01",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T22:06:24.314Z",
+      "updatedAt": "2026-01-09T22:08:12.892Z"
+    },
+    {
+      "id": "527c27a8-67eb-40e7-b42f-c65613927aec",
+      "name": "Ostbayerische Technische Hochschule Amberg-Weiden (OTH)",
+      "city": "Amberg",
+      "website": "https://www.oth-aw.de/",
+      "degreeTitle": "Artificial Intelligence for Industrial Applications",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 587,
+      "germanLanguageTestRequired": true,
+      "requiredDocumentIds": [],
+      "notes": "Semester contribution\nStudy service fee of 500 EUR/semester plus a student union fee of 87 EUR/semester\nProof of German A2 must be submitted after your first study year at the latest.",
+      "fields": {
+        "admission_start": "2026-04-15",
+        "admission_end": "2026-06-08",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T22:08:43.668Z",
+      "updatedAt": "2026-01-09T22:10:34.126Z"
+    },
+    {
+      "id": "e78db091-4e4a-4c48-b3be-bce427d3b8cf",
+      "name": "University of Passau",
+      "city": "Passau",
+      "website": "https://www.uni-passau.de/",
+      "degreeTitle": "Master of Science in Artificial Intelligence Engineering",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 120,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": "2026-04-01",
+        "admission_end": "2026-05-01",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T22:11:45.976Z",
+      "updatedAt": "2026-01-09T22:14:18.070Z"
+    },
+    {
+      "id": "51e6af57-7de7-4d1b-be03-42e52cdc512b",
+      "name": "eu-Ulm University of Applied Sciences",
+      "city": "Neu-Ulm",
+      "website": "https://www.hnu.de/",
+      "degreeTitle": "Artificial Intelligence and Data Analytics",
+      "durationSemesters": 3,
+      "tuitionFeePerSemester": 100,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": "2026-05-02",
+        "admission_end": "2026-07-15",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T22:14:38.086Z",
+      "updatedAt": "2026-01-09T22:17:19.822Z"
+    },
+    {
+      "id": "b3b74d48-dea5-46d3-a7d6-f07ea7e39c09",
+      "name": "FAU Erlangen-Nürnberg",
+      "city": "Erlangen",
+      "website": "https://www.fau.de/",
+      "degreeTitle": "MSc Autonomy Technologies",
+      "durationSemesters": 3,
+      "tuitionFeePerSemester": 72,
+      "germanLanguageTestRequired": true,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": null,
+        "admission_end": "2026-07-15",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T22:18:19.104Z",
+      "updatedAt": "2026-01-09T22:21:02.828Z"
+    },
+    {
+      "id": "4d6cc9f6-fb6f-4aac-af0e-1ede44bde7e5",
+      "name": "University of Technology Nuremberg",
+      "city": "Nürnberg",
+      "website": "https://www.utn.de/en/",
+      "degreeTitle": "AI & Robotics",
+      "durationSemesters": 4,
+      "tuitionFeePerSemester": 72,
+      "germanLanguageTestRequired": false,
+      "requiredDocumentIds": [],
+      "fields": {
+        "admission_start": "2026-03-01",
+        "admission_end": "2026-05-01",
+        "vpd_required": false
+      },
+      "createdAt": "2026-01-09T22:21:33.549Z",
+      "updatedAt": "2026-01-09T22:22:38.472Z"
+    }
+  ],
+  "programs": [],
+  "admissionWindows": [],
+  "documentTemplates": [
+    {
+      "id": "225af175-f8ec-459d-ad5d-d8718bed80fc",
+      "name": "Passport",
+      "category": "Identity",
+      "requiredByDefault": true,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "d6a1636f-4e2d-482f-8801-08e0940c6fe0",
+      "name": "Transcripts",
+      "category": "Academic",
+      "requiredByDefault": true,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "a248680e-74de-402f-9a24-fc0543bcbf34",
+      "name": "CV",
+      "category": "Application",
+      "requiredByDefault": true,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "bcd488c9-0961-44d2-a919-1d0c467a5316",
+      "name": "Statement of Purpose (SOP)",
+      "category": "Application",
+      "requiredByDefault": true,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "3c62310c-2bf1-408e-9e95-4320cdad2095",
+      "name": "Letters of Recommendation (LORs)",
+      "category": "Application",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "44e1bbff-4121-46d3-b634-b78f0f1c8ddd",
+      "name": "APS Certificate (if applicable)",
+      "category": "Portal",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "9e996dca-dbdb-41d2-baff-bf9fa6c2ef43",
+      "name": "VPD / uni-assist (if required)",
+      "category": "Portal",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T21:07:14.076Z",
+      "updatedAt": "2026-01-08T21:07:14.076Z"
+    },
+    {
+      "id": "efa4176b-880d-4368-a20b-7c5f731db4e7",
+      "name": "Matric",
+      "category": "degree",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:13:37.114Z",
+      "updatedAt": "2026-01-08T22:13:51.384Z"
+    },
+    {
+      "id": "315a81ff-58ee-475c-a146-7b37fb013d0e",
+      "name": "Inter",
+      "category": "Degree",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:13:52.264Z",
+      "updatedAt": "2026-01-08T22:14:09.057Z"
+    },
+    {
+      "id": "c60c37f9-104a-487c-a4f7-96c0e0a854b5",
+      "name": "BS Degree",
+      "category": "Degree",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:14:16.226Z",
+      "updatedAt": "2026-01-08T22:14:27.973Z"
+    },
+    {
+      "id": "02fbaf65-9c82-4b7c-8d1a-367486be349b",
+      "name": "Transcript",
+      "category": "DMC",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:14:28.832Z",
+      "updatedAt": "2026-01-08T22:14:38.134Z"
+    },
+    {
+      "id": "22ff3f17-ae9a-4cf2-af35-3926681d70e8",
+      "name": "Police Criminal",
+      "category": "Certificate",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:14:41.377Z",
+      "updatedAt": "2026-01-08T22:14:53.901Z"
+    },
+    {
+      "id": "8063996f-e4ea-487f-8a90-bf20c91971b0",
+      "name": "MOI",
+      "category": "Lang proof",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:14:59.852Z",
+      "updatedAt": "2026-01-08T22:15:07.858Z"
+    },
+    {
+      "id": "60162770-3996-442a-93fd-40065a5b5bc2",
+      "name": "IELTS",
+      "category": "Lang Proof",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:15:09.860Z",
+      "updatedAt": "2026-01-08T22:15:17.717Z"
+    },
+    {
+      "id": "569eebb2-6534-424c-9898-88d2f924c08c",
+      "name": "Domicile",
+      "category": "Govt. Doc",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-08T22:18:10.065Z",
+      "updatedAt": "2026-01-08T22:18:20.247Z"
+    },
+    {
+      "id": "a1c52c50-e45a-4f0f-b84d-d3a5e79bc0f9",
+      "name": "Letter of Motivation",
+      "category": "Letter",
+      "requiredByDefault": false,
+      "createdAt": "2026-01-09T22:04:21.927Z",
+      "updatedAt": "2026-01-09T22:04:34.150Z"
+    }
+  ],
+  "collectedDocumentIds": [
+    "225af175-f8ec-459d-ad5d-d8718bed80fc",
+    "d6a1636f-4e2d-482f-8801-08e0940c6fe0",
+    "efa4176b-880d-4368-a20b-7c5f731db4e7",
+    "315a81ff-58ee-475c-a146-7b37fb013d0e",
+    "c60c37f9-104a-487c-a4f7-96c0e0a854b5",
+    "02fbaf65-9c82-4b7c-8d1a-367486be349b",
+    "22ff3f17-ae9a-4cf2-af35-3926681d70e8",
+    "8063996f-e4ea-487f-8a90-bf20c91971b0",
+    "569eebb2-6534-424c-9898-88d2f924c08c"
+  ],
+  "applications": [],
+  "applicationDocuments": [],
+  "uploads": [],
+  "targets": [
+    {
+      "id": "e1c8034d-6d62-4ca4-a9a3-958ee4666239",
+      "name": "IELTS",
+      "description": "need 7+",
+      "targetDate": "2026-02-01",
+      "createdAt": "2026-01-08T22:16:17.947Z",
+      "updatedAt": "2026-01-08T22:16:40.940Z"
+    },
+    {
+      "id": "230f5ef9-c082-465e-9ac5-9559921cdf43",
+      "name": "Apply VDP",
+      "description": "uni assisst",
+      "targetDate": "2026-01-10",
+      "createdAt": "2026-01-08T22:16:47.376Z",
+      "updatedAt": "2026-01-08T22:17:04.369Z"
+    }
+  ],
+  "notes": []
+}

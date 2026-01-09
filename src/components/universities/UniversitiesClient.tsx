@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace/client";
 import type { University, UniversityFieldDefinition } from "@/lib/workspace/types";
 
@@ -15,12 +15,50 @@ function parseNumberOrNull(v: string) {
   return Number.isFinite(n) ? n : null;
 }
 
+function formatFee(n: number | undefined) {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
+function formatDateCell(v: unknown) {
+  if (typeof v !== "string" || !v) return "";
+  const d = new Date(v);
+  return Number.isFinite(d.getTime()) ? d.toLocaleDateString() : v;
+}
+
 export function UniversitiesClient() {
   const { workspace, loading, saving, error, save } = useWorkspace();
   const [editing, setEditing] = useState<University | null>(null);
   const [creating, setCreating] = useState(false);
+  const [viewing, setViewing] = useState<University | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = window.setTimeout(() => setNotice(null), 2500);
+    return () => window.clearTimeout(t);
+  }, [notice]);
 
   const uniFields = workspace?.admin.universityFields ?? [];
+  // "Documents" are handled separately via requiredDocumentIds, so we hide any doc-style custom field in the table.
+  const hiddenFieldKeys = useMemo(
+    () => new Set(["required_documents", "degree_duration_months"]),
+    [],
+  );
+  const visibleUniFields = useMemo(
+    () =>
+      uniFields.filter(
+        (d) =>
+          !hiddenFieldKeys.has(d.key) &&
+          !d.key.toLowerCase().includes("ielts"),
+      ),
+    [uniFields, hiddenFieldKeys],
+  );
+  const formUniFields = visibleUniFields;
 
   const universities = useMemo(() => {
     const list = workspace?.universities ?? [];
@@ -37,7 +75,9 @@ export function UniversitiesClient() {
 
   const ws = workspace;
 
-  async function upsertUniversity(nextUni: University) {
+  async function upsertUniversity(
+    nextUni: University,
+  ): Promise<{ ok: boolean; created: boolean }> {
     const exists = ws.universities.some((u) => u.id === nextUni.id);
     const next = {
       ...ws,
@@ -45,7 +85,8 @@ export function UniversitiesClient() {
         ? ws.universities.map((u) => (u.id === nextUni.id ? nextUni : u))
         : [...ws.universities, nextUni],
     };
-    await save(next);
+    const ok = await save(next);
+    return { ok, created: !exists };
   }
 
   async function deleteUniversity(id: string) {
@@ -59,7 +100,8 @@ export function UniversitiesClient() {
         return prog ? prog.universityId !== id : true;
       }),
     };
-    await save(next);
+    const ok = await save(next);
+    if (ok && viewing?.id === id) setViewing(null);
   }
 
   function startCreate() {
@@ -71,6 +113,8 @@ export function UniversitiesClient() {
       website: "",
       degreeTitle: "",
       durationSemesters: undefined,
+      tuitionFeePerSemester: undefined,
+      germanLanguageTestRequired: false,
       requiredDocumentIds: [],
       notes: "",
       fields: {},
@@ -96,18 +140,13 @@ export function UniversitiesClient() {
     const website = String(form.get("website") ?? "").trim();
     const degreeTitle = String(form.get("degreeTitle") ?? "").trim();
     const durationSemesters = parseNumberOrNull(String(form.get("durationSemesters") ?? ""));
+    const tuitionFeePerSemester = parseNumberOrNull(String(form.get("tuitionFeePerSemester") ?? ""));
+    const germanLanguageTestRequired = form.get("germanLanguageTestRequired") === "on";
     const notes = String(form.get("notes") ?? "").trim();
 
-    // Collect checked document IDs
-    const checkedDocs: string[] = [];
-    for (const [key, value] of form.entries()) {
-      if (key.startsWith("doc:") && value === "on") {
-        checkedDocs.push(key.replace("doc:", ""));
-      }
-    }
-
-    const fields: University["fields"] = {};
-    for (const def of uniFields) {
+    // Preserve any existing hidden fields (so removing a column doesn't wipe data).
+    const fields: University["fields"] = { ...(editing.fields ?? {}) };
+    for (const def of formUniFields) {
       const raw = form.get(`field:${def.key}`);
       if (def.type === "boolean") {
         fields[def.key] = raw === "on";
@@ -119,25 +158,36 @@ export function UniversitiesClient() {
       }
     }
 
-    await upsertUniversity({
+    const res = await upsertUniversity({
       ...editing,
       name,
       city: city || undefined,
       website: website || undefined,
       degreeTitle: degreeTitle || undefined,
       durationSemesters: durationSemesters || undefined,
-      requiredDocumentIds: checkedDocs,
+      tuitionFeePerSemester: tuitionFeePerSemester ?? undefined,
+      germanLanguageTestRequired,
+      // Required docs are managed elsewhere now; keep existing values unchanged.
+      requiredDocumentIds: editing.requiredDocumentIds ?? [],
       notes: notes || undefined,
       fields,
       updatedAt: nowIso(),
     });
 
-    setEditing(null);
-    setCreating(false);
+    if (res.ok) {
+      setEditing(null);
+      setCreating(false);
+      setNotice(res.created ? "University added" : "University updated");
+    }
   }
 
   return (
     <div className="space-y-6">
+      {notice ? (
+        <div className="fixed right-4 top-4 z-50 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-black shadow-lg">
+          {notice}
+        </div>
+      ) : null}
       <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -161,37 +211,6 @@ export function UniversitiesClient() {
             <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
-
-        {ws.documentTemplates.length > 0 ? (
-          <div className="mt-4 rounded-lg border border-black/10 bg-white p-3">
-            <div className="text-xs font-semibold text-black/70 mb-2">
-              Available document templates ({ws.documentTemplates.length}):
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {ws.documentTemplates.map((doc) => (
-                <span
-                  key={doc.id}
-                  className="rounded-lg border border-black/20 bg-white px-2 py-1 text-xs text-black"
-                >
-                  {doc.name}
-                </span>
-              ))}
-            </div>
-            <div className="mt-2 text-xs text-black/60">
-              These documents can be marked as required when adding/editing a university.
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4 rounded-lg border border-black/10 bg-white p-3">
-            <div className="text-xs text-black/70">
-              No document templates yet. Add them in{" "}
-              <a href="/app/documents" className="underline hover:text-black">
-                Documents
-              </a>
-              .
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
@@ -201,7 +220,16 @@ export function UniversitiesClient() {
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">City</th>
-                <th className="px-4 py-3">Website</th>
+                <th className="px-4 py-3">Degree</th>
+                <th className="px-4 py-3">Duration</th>
+                <th className="px-4 py-3">Fee</th>
+                <th className="px-4 py-3">German lang</th>
+                {visibleUniFields.map((def) => (
+                  <th key={def.id} className="px-4 py-3">
+                    {def.label}
+                  </th>
+                ))}
+                <th className="px-4 py-3">Created</th>
                 <th className="px-4 py-3">Updated</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -209,7 +237,7 @@ export function UniversitiesClient() {
             <tbody className="divide-y divide-black/10">
               {universities.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-4 text-black/70" colSpan={5}>
+                  <td className="px-4 py-4 text-black/70" colSpan={9 + visibleUniFields.length}>
                     No universities yet. Click “Add university”.
                   </td>
                 </tr>
@@ -217,23 +245,75 @@ export function UniversitiesClient() {
                 universities.map((u) => (
                   <tr key={u.id} className="hover:bg-black/5">
                     <td className="px-4 py-3 font-semibold text-black">
-                      {u.name}
-                    </td>
-                    <td className="px-4 py-3 text-black/70">{u.city ?? ""}</td>
-                    <td className="px-4 py-3 text-black/70">
                       {u.website ? (
-                        <a href={u.website} target="_blank" rel="noreferrer">
-                          {u.website}
+                        <a
+                          href={u.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          {u.name}
                         </a>
                       ) : (
-                        ""
+                        u.name
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-black/70">{u.city ?? ""}</td>
+                    <td className="px-4 py-3 text-black/70">{u.degreeTitle ?? ""}</td>
+                    <td className="px-4 py-3 text-black/70">
+                      {typeof u.durationSemesters === "number" ? u.durationSemesters : ""}
+                    </td>
+                    <td className="px-4 py-3 text-black/70">{formatFee(u.tuitionFeePerSemester)}</td>
+                    <td className="px-4 py-3 text-black/70">
+                      {typeof u.germanLanguageTestRequired === "boolean"
+                        ? u.germanLanguageTestRequired
+                          ? "Yes"
+                          : "No"
+                        : ""}
+                    </td>
+                    {visibleUniFields.map((def) => {
+                      const v = u.fields?.[def.key] ?? null;
+                      const render =
+                        def.type === "boolean"
+                          ? v === null
+                            ? ""
+                            : v
+                              ? "Yes"
+                              : "No"
+                          : def.type === "date"
+                            ? formatDateCell(v)
+                            : def.type === "url" && typeof v === "string" && v
+                              ? v
+                              : v === null
+                                ? ""
+                                : String(v);
+                      return (
+                        <td key={def.id} className="px-4 py-3 text-black/70">
+                          {def.type === "url" && typeof v === "string" && v ? (
+                            <a href={v} target="_blank" rel="noreferrer" className="underline">
+                              {v}
+                            </a>
+                          ) : (
+                            render
+                          )}
+                        </td>
+                      );
+                    })}
+                    <td className="px-4 py-3 text-black/60">
+                      {new Date(u.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-black/60">
                       {new Date(u.updatedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setViewing(u)}
+                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                        >
+                          View
+                        </button>
                         <button
                           type="button"
                           onClick={() => startEdit(u)}
@@ -260,134 +340,288 @@ export function UniversitiesClient() {
       </div>
 
       {editing ? (
-        <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-          <div className="text-lg font-semibold">
-            {creating ? "Add university" : "Update university"}
-          </div>
-
-          <form onSubmit={submitForm} className="mt-4 space-y-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              <label className="block">
-                <div className="text-sm font-medium text-black">Name</div>
-                <input
-                  name="name"
-                  defaultValue={editing.name}
-                  required
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-
-              <label className="block">
-                <div className="text-sm font-medium text-black">City</div>
-                <input
-                  name="city"
-                  defaultValue={editing.city ?? ""}
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-
-              <label className="block md:col-span-2">
-                <div className="text-sm font-medium text-black">Website</div>
-                <input
-                  name="website"
-                  type="url"
-                  defaultValue={editing.website ?? ""}
-                  placeholder="https://…"
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-
-              <label className="block">
-                <div className="text-sm font-medium text-black">Degree title</div>
-                <input
-                  name="degreeTitle"
-                  defaultValue={editing.degreeTitle ?? ""}
-                  placeholder="e.g. Master of Science in Computer Science"
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-
-              <label className="block">
-                <div className="text-sm font-medium text-black">Duration (semesters)</div>
-                <input
-                  name="durationSemesters"
-                  type="number"
-                  min="1"
-                  defaultValue={editing.durationSemesters ?? ""}
-                  placeholder="e.g. 4"
-                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                />
-              </label>
-            </div>
-
-            {ws.documentTemplates.length > 0 ? (
-              <div className="rounded-2xl border border-black/10 bg-white p-4">
-                <div className="text-sm font-semibold text-black">
-                  Required documents
-                </div>
-                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  {ws.documentTemplates.map((doc) => (
-                    <label
-                      key={doc.id}
-                      className="flex items-center gap-2 rounded-xl border border-black/20 bg-white px-3 py-2"
-                    >
-                      <input
-                        type="checkbox"
-                        name={`doc:${doc.id}`}
-                        defaultChecked={editing.requiredDocumentIds?.includes(doc.id) ?? false}
-                        className="h-4 w-4 accent-black"
-                      />
-                      <span className="text-sm text-black">{doc.name}</span>
-                    </label>
-                  ))}
-                </div>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl">
+            <div className="flex items-start justify-between gap-3 border-b border-black/10 p-5">
+              <div className="text-lg font-semibold text-black">
+                {creating ? "Add university" : "Update university"}
               </div>
-            ) : null}
-
-            {uniFields.length ? (
-              <div className="rounded-2xl border border-black/10 bg-white p-4">
-                <div className="text-sm font-semibold text-black">
-                  Custom fields
-                </div>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {uniFields.map((def) => (
-                    <CustomFieldInput
-                      key={def.id}
-                      def={def}
-                      defaultValue={editing.fields?.[def.key] ?? null}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <label className="block">
-              <div className="text-sm font-medium text-black">Notes</div>
-              <textarea
-                name="notes"
-                defaultValue={editing.notes ?? ""}
-                rows={3}
-                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-              />
-            </label>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
-              >
-                {saving ? "Saving…" : "Save"}
-              </button>
               <button
                 type="button"
-                onClick={() => setEditing(null)}
+                onClick={() => {
+                  setEditing(null);
+                  setCreating(false);
+                }}
                 className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
               >
-                Cancel
+                Close
               </button>
             </div>
-          </form>
+
+            <div className="max-h-[80vh] overflow-auto p-5">
+              <form onSubmit={submitForm} className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-2">
+                  <label className="block">
+                    <div className="text-sm font-medium text-black">Name</div>
+                    <input
+                      name="name"
+                      defaultValue={editing.name}
+                      required
+                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="text-sm font-medium text-black">City</div>
+                    <input
+                      name="city"
+                      defaultValue={editing.city ?? ""}
+                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </label>
+
+                  <label className="block md:col-span-2">
+                    <div className="text-sm font-medium text-black">Website</div>
+                    <input
+                      name="website"
+                      type="url"
+                      defaultValue={editing.website ?? ""}
+                      placeholder="https://…"
+                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="text-sm font-medium text-black">Degree title</div>
+                    <input
+                      name="degreeTitle"
+                      defaultValue={editing.degreeTitle ?? ""}
+                      placeholder="e.g. Master of Science in Computer Science"
+                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="text-sm font-medium text-black">Duration (semesters)</div>
+                    <input
+                      name="durationSemesters"
+                      type="number"
+                      min="1"
+                      defaultValue={editing.durationSemesters ?? ""}
+                      placeholder="e.g. 4"
+                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="text-sm font-medium text-black">Fee (EUR / semester)</div>
+                    <input
+                      name="tuitionFeePerSemester"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      defaultValue={editing.tuitionFeePerSemester ?? ""}
+                      placeholder="e.g. 1500"
+                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                    />
+                  </label>
+                </div>
+
+                <div className="rounded-2xl border border-black/10 bg-white p-4">
+                  <div className="text-sm font-semibold text-black">Tests & language</div>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <label className="flex items-center gap-2 rounded-xl border border-black/20 bg-white px-3 py-2">
+                      <input
+                        type="checkbox"
+                        name="germanLanguageTestRequired"
+                        defaultChecked={Boolean(editing.germanLanguageTestRequired)}
+                        className="h-4 w-4 accent-black"
+                      />
+                      <span className="text-sm text-black">
+                        German language test required
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {formUniFields.length ? (
+                  <div className="rounded-2xl border border-black/10 bg-white p-4">
+                    <div className="text-sm font-semibold text-black">Custom fields</div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      {formUniFields.map((def) => (
+                        <CustomFieldInput
+                          key={def.id}
+                          def={def}
+                          defaultValue={editing.fields?.[def.key] ?? null}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <label className="block">
+                  <div className="text-sm font-medium text-black">Notes</div>
+                  <textarea
+                    name="notes"
+                    defaultValue={editing.notes ?? ""}
+                    rows={3}
+                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                  />
+                </label>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
+                  >
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(null);
+                      setCreating(false);
+                    }}
+                    className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {viewing ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl">
+            <div className="flex items-start justify-between gap-3 border-b border-black/10 p-5">
+              <div>
+                <div className="text-lg font-semibold text-black">{viewing.name}</div>
+                <div className="mt-1 text-sm text-black/60">
+                  {viewing.city ?? ""}{viewing.city && viewing.website ? " • " : ""}
+                  {viewing.website ? (
+                    <a
+                      href={viewing.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline hover:no-underline"
+                    >
+                      Website
+                    </a>
+                  ) : null}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewing(null)}
+                className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[75vh] overflow-auto p-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-black/10 bg-white p-4">
+                  <div className="text-sm font-semibold text-black">Basics</div>
+                  <div className="mt-3 space-y-2 text-sm text-black/80">
+                    <div>
+                      <span className="font-medium">Degree:</span> {viewing.degreeTitle ?? "—"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Duration (semesters):</span>{" "}
+                      {typeof viewing.durationSemesters === "number"
+                        ? viewing.durationSemesters
+                        : "—"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Fee:</span>{" "}
+                      {formatFee(viewing.tuitionFeePerSemester) || "—"}
+                    </div>
+                    <div>
+                      <span className="font-medium">German language test required:</span>{" "}
+                      {typeof viewing.germanLanguageTestRequired === "boolean"
+                        ? viewing.germanLanguageTestRequired
+                          ? "Yes"
+                          : "No"
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-black/10 bg-white p-4">
+                  <div className="text-sm font-semibold text-black">Dates & fields</div>
+                  <div className="mt-3 space-y-2 text-sm text-black/80">
+                    {visibleUniFields.length === 0 ? (
+                      <div className="text-black/60">No custom fields.</div>
+                    ) : (
+                      visibleUniFields.map((def) => {
+                        const v = viewing.fields?.[def.key] ?? null;
+                        const text =
+                          def.type === "boolean"
+                            ? v === null
+                              ? "—"
+                              : v
+                                ? "Yes"
+                                : "No"
+                            : def.type === "date"
+                              ? formatDateCell(v) || "—"
+                              : v === null
+                                ? "—"
+                                : String(v);
+                        return (
+                          <div key={def.id}>
+                            <span className="font-medium">{def.label}:</span>{" "}
+                            {def.type === "url" && typeof v === "string" && v ? (
+                              <a
+                                href={v}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline hover:no-underline"
+                              >
+                                {v}
+                              </a>
+                            ) : (
+                              text
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {ws.documentTemplates.length > 0 ? (
+                <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+                  <div className="text-sm font-semibold text-black">Required documents</div>
+                  <div className="mt-3 text-sm text-black/60">
+                    Managed in Documents (not set per-university here).
+                  </div>
+                </div>
+              ) : null}
+
+              {viewing.notes ? (
+                <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+                  <div className="text-sm font-semibold text-black">Notes</div>
+                  <div className="mt-3 whitespace-pre-wrap text-sm text-black/80">
+                    {viewing.notes}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

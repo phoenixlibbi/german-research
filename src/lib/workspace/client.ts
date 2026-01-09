@@ -28,7 +28,7 @@ export function useWorkspace() {
     void refresh();
   }, [refresh]);
 
-  const save = useCallback(async (next: Workspace) => {
+  const save = useCallback(async (next: Workspace): Promise<boolean> => {
     setError(null);
     setSaving(true);
     try {
@@ -39,8 +39,10 @@ export function useWorkspace() {
       });
       if (!res.ok) throw new Error("Failed to save workspace");
       setWorkspace(next);
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
+      return false;
     } finally {
       setSaving(false);
     }
