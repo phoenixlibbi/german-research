@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace/client";
 import type { University, UniversityFieldDefinition } from "@/lib/workspace/types";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 const EMPTY_UNIS: University[] = [];
 
@@ -691,31 +692,38 @@ export function UniversitiesClient() {
                       {new Date(u.updatedAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         <button
                           type="button"
                           onClick={() => setViewing(u)}
-                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                          title="View"
+                          aria-label="View"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/20 bg-white text-black hover:bg-black/5"
                         >
-                          View
+                          <Eye className="h-4 w-4" />
                         </button>
+
                         {!readOnly ? (
                           <>
                             <button
                               type="button"
                               onClick={() => startEdit(u)}
-                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                              title="Update"
+                              aria-label="Update"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/20 bg-white text-black hover:bg-black/5"
                             >
-                              Update
-                        </button>
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() => void deleteUniversity(u.id)}
-                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
-                        >
-                          Delete
-                        </button>
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => void deleteUniversity(u.id)}
+                              title="Delete"
+                              aria-label="Delete"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/20 bg-white text-black hover:bg-black/5 disabled:opacity-60"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </>
                         ) : null}
                       </div>
