@@ -144,7 +144,7 @@ export default function DashboardPage() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
-            className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
+            className="rounded-xl bg-black px-3 py-2 text-sm font-semibold !text-white no-underline hover:bg-black/90 hover:!text-white visited:!text-white"
             href="/app/universities"
           >
             Add uni
