@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/lib/workspace/client";
 import type { University, UniversityFieldDefinition } from "@/lib/workspace/types";
 
+const EMPTY_UNIS: University[] = [];
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -137,25 +139,17 @@ export function UniversitiesClient() {
     return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [workspace?.universities]);
 
-  if (loading || !workspace) {
-    return (
-      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/70">
-        Loading…
-      </div>
-    );
-  }
-
-  const ws = workspace;
   const nowMs = Date.now();
-  const startKey = ws.admin.calendar.startFieldKey ?? "admission_start";
-  const endKey = ws.admin.calendar.endFieldKey ?? "admission_end";
+  const startKey = workspace?.admin.calendar.startFieldKey ?? "admission_start";
+  const endKey = workspace?.admin.calendar.endFieldKey ?? "admission_end";
+  const wsUniversities = workspace?.universities ?? EMPTY_UNIS;
 
   const universityMeta = useMemo(() => {
     const out = new Map<
       string,
       { startMs: number | null; endMs: number | null; status: UniPeriodStatus }
     >();
-    for (const u of ws.universities) {
+    for (const u of wsUniversities) {
       const s = u.fields?.[startKey];
       const e = u.fields?.[endKey];
       const startMs =
@@ -165,7 +159,7 @@ export function UniversitiesClient() {
       out.set(u.id, { startMs, endMs, status: classifyPeriod(startMs, endMs, nowMs) });
     }
     return out;
-  }, [ws.universities, startKey, endKey, nowMs]);
+  }, [wsUniversities, startKey, endKey, nowMs]);
 
   const filteredUniversities = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -251,6 +245,16 @@ export function UniversitiesClient() {
     }
     return base;
   }, [universities.length, filteredUniversities, universityMeta]);
+
+  if (loading || !workspace) {
+    return (
+      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/70">
+        Loading…
+      </div>
+    );
+  }
+
+  const ws = workspace;
 
   async function upsertUniversity(
     nextUni: University,
