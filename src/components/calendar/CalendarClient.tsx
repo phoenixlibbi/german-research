@@ -33,6 +33,15 @@ function parseDateOrNull(v: unknown): Date | null {
   }
 }
 
+function formatFee(n: number | undefined) {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
 export function CalendarClient() {
   const { workspace, loading, error } = useWorkspace();
   const [cursor, setCursor] = useState(() => new Date());
@@ -283,7 +292,7 @@ export function CalendarClient() {
           onClick={() => setSelectedEvent(null)}
         >
           <div
-            className="w-full max-w-lg rounded-2xl border border-black/10 bg-white p-6 shadow-lg"
+            className="w-full max-w-3xl rounded-2xl border border-black/10 bg-white p-6 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -311,95 +320,144 @@ export function CalendarClient() {
                     (u) => u.id === selectedEvent.uniId
                   );
                   if (!uni) return null;
+
+                  const hidden = new Set(["required_documents", "degree_duration_months"]);
+                  const visibleFields = (workspace.admin.universityFields ?? []).filter(
+                    (d) =>
+                      !hidden.has(d.key) && !d.key.toLowerCase().includes("ielts"),
+                  );
+
+                  const startKey = workspace.admin.calendar.startFieldKey ?? "admission_start";
+                  const endKey = workspace.admin.calendar.endFieldKey ?? "admission_end";
+                  const startVal =
+                    typeof uni.fields?.[startKey] === "string" ? (uni.fields[startKey] as string) : "";
+                  const endVal =
+                    typeof uni.fields?.[endKey] === "string" ? (uni.fields[endKey] as string) : "";
+
                   return (
-                    <div className="space-y-3">
-                      <div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-black/10 bg-white p-4">
                         <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
                           University
                         </div>
-                        <div className="mt-1 text-sm font-medium text-black">
-                          {uni.name}
+                        <div className="mt-2 text-sm font-medium text-black">{uni.name}</div>
+                        <div className="mt-1 text-sm text-black/70">{uni.city ?? "—"}</div>
+
+                        <div className="mt-4 space-y-2 text-sm text-black/80">
+                          <div>
+                            <span className="font-medium">Degree:</span>{" "}
+                            {uni.degreeTitle ?? "—"}
+                          </div>
+                          <div>
+                            <span className="font-medium">Duration:</span>{" "}
+                            {typeof uni.durationSemesters === "number"
+                              ? `${uni.durationSemesters} semester${uni.durationSemesters !== 1 ? "s" : ""}`
+                              : "—"}
+                          </div>
+                          <div>
+                            <span className="font-medium">Fee:</span>{" "}
+                            {formatFee(uni.tuitionFeePerSemester) || "—"}
+                          </div>
+                          <div>
+                            <span className="font-medium">German language test:</span>{" "}
+                            {typeof uni.germanLanguageTestRequired === "boolean"
+                              ? uni.germanLanguageTestRequired
+                                ? "Required"
+                                : "Not required"
+                              : "—"}
+                          </div>
+                          <div>
+                            <span className="font-medium">Application period:</span>{" "}
+                            {startVal || endVal ? `${startVal || "—"} → ${endVal || "—"}` : "—"}
+                          </div>
                         </div>
-                        {uni.city ? (
-                          <div className="mt-1 text-sm text-black/70">
-                            {uni.city}
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {uni.website ? (
+                            <a
+                              href={uni.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                            >
+                              Website
+                            </a>
+                          ) : null}
+                          {uni.uniAssistUrl ? (
+                            <a
+                              href={uni.uniAssistUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                            >
+                              Uni-Assist
+                            </a>
+                          ) : null}
+                          {uni.daadUrl ? (
+                            <a
+                              href={uni.daadUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+                            >
+                              DAAD
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-black/10 bg-white p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                          All fields
+                        </div>
+                        <div className="mt-3 space-y-2 text-sm text-black/80">
+                          {visibleFields.length === 0 ? (
+                            <div className="text-black/60">No custom fields.</div>
+                          ) : (
+                            visibleFields.map((def) => {
+                              const v = uni.fields?.[def.key] ?? null;
+                              const text =
+                                def.type === "boolean"
+                                  ? v === null
+                                    ? "—"
+                                    : v
+                                      ? "Yes"
+                                      : "No"
+                                  : v === null
+                                    ? "—"
+                                    : String(v);
+                              return (
+                                <div key={def.id}>
+                                  <span className="font-medium">{def.label}:</span>{" "}
+                                  {def.type === "url" && typeof v === "string" && v ? (
+                                    <a
+                                      href={v}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="underline hover:no-underline"
+                                    >
+                                      {v}
+                                    </a>
+                                  ) : (
+                                    text
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {uni.notes ? (
+                          <div className="mt-4 rounded-xl border border-black/10 bg-white p-3">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
+                              Notes
+                            </div>
+                            <div className="mt-2 text-sm text-black/70 whitespace-pre-wrap">
+                              {uni.notes}
+                            </div>
                           </div>
                         ) : null}
                       </div>
-
-                      {uni.degreeTitle ? (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                            Degree
-                          </div>
-                          <div className="mt-1 text-sm text-black">
-                            {uni.degreeTitle}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {uni.durationSemesters ? (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                            Duration
-                          </div>
-                          <div className="mt-1 text-sm text-black">
-                            {uni.durationSemesters} semester
-                            {uni.durationSemesters !== 1 ? "s" : ""}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {uni.website ? (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                            Website
-                          </div>
-                          <a
-                            href={uni.website}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-1 text-sm text-black underline hover:text-black/70"
-                          >
-                            {uni.website}
-                          </a>
-                        </div>
-                      ) : null}
-
-                      {selectedEvent.kind === "start" &&
-                        workspace.admin.calendar.startFieldKey ? (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                            Start Date Field
-                          </div>
-                          <div className="mt-1 text-sm text-black">
-                            {workspace.admin.calendar.startFieldKey}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {selectedEvent.kind === "end" &&
-                        workspace.admin.calendar.endFieldKey ? (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                            End Date Field
-                          </div>
-                          <div className="mt-1 text-sm text-black">
-                            {workspace.admin.calendar.endFieldKey}
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {uni.notes ? (
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-wide text-black/60">
-                            Notes
-                          </div>
-                          <div className="mt-1 text-sm text-black/70 whitespace-pre-wrap">
-                            {uni.notes}
-                          </div>
-                        </div>
-                      ) : null}
                     </div>
                   );
                 })()

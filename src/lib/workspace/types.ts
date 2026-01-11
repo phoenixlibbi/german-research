@@ -36,6 +36,8 @@ export type University = {
   name: string;
   city?: string;
   website?: string;
+  uniAssistUrl?: string;
+  daadUrl?: string;
   degreeTitle?: string;
   durationSemesters?: number;
   // Fee (store as number; UI currently assumes EUR)

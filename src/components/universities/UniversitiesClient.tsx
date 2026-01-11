@@ -30,12 +30,84 @@ function formatDateCell(v: unknown) {
   return Number.isFinite(d.getTime()) ? d.toLocaleDateString() : v;
 }
 
+function normalizeUrlOrEmpty(input: string) {
+  const v = input.trim();
+  if (!v) return "";
+  // Allow plain domains by auto-prefixing https://
+  if (!/^https?:\/\//i.test(v)) return `https://${v}`;
+  return v;
+}
+
+function parseYmdToMs(v: string): number | null {
+  const t = v.trim();
+  if (!t) return null;
+  // Expect YYYY-MM-DD (from date inputs / our date custom fields)
+  const ms = Date.parse(`${t}T00:00:00Z`);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+type UniPeriodStatus =
+  | "no_dates"
+  | "open_now"
+  | "opening_soon"
+  | "closing_soon"
+  | "upcoming"
+  | "past";
+
+function classifyPeriod(
+  startMs: number | null,
+  endMs: number | null,
+  nowMs: number,
+): UniPeriodStatus {
+  if (startMs === null && endMs === null) return "no_dates";
+  const soonMs = 14 * 86400000;
+  if (startMs !== null && endMs !== null) {
+    if (nowMs >= startMs && nowMs <= endMs) {
+      if (endMs - nowMs <= soonMs) return "closing_soon";
+      return "open_now";
+    }
+    if (startMs > nowMs) {
+      if (startMs - nowMs <= soonMs) return "opening_soon";
+      return "upcoming";
+    }
+    return "past";
+  }
+  if (startMs !== null) {
+    if (startMs > nowMs) {
+      if (startMs - nowMs <= soonMs) return "opening_soon";
+      return "upcoming";
+    }
+    return "past";
+  }
+  // endMs only
+  if (endMs !== null) {
+    if (nowMs <= endMs) {
+      if (endMs - nowMs <= soonMs) return "closing_soon";
+      return "open_now";
+    }
+    return "past";
+  }
+  return "no_dates";
+}
+
 export function UniversitiesClient() {
   const { workspace, loading, saving, error, save, readOnly } = useWorkspace();
   const [editing, setEditing] = useState<University | null>(null);
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<University | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<UniPeriodStatus | "all">("all");
+  const [startFrom, setStartFrom] = useState(""); // YYYY-MM-DD
+  const [endTo, setEndTo] = useState(""); // YYYY-MM-DD
+  const [feeFilter, setFeeFilter] = useState<"all" | "has" | "missing">("all");
+  const [germanFilter, setGermanFilter] = useState<"all" | "required" | "not_required">(
+    "all",
+  );
+  const [uniAssistFilter, setUniAssistFilter] = useState<"all" | "has" | "missing">(
+    "all",
+  );
+  const [daadFilter, setDaadFilter] = useState<"all" | "has" | "missing">("all");
 
   useEffect(() => {
     if (!notice) return;
@@ -74,6 +146,111 @@ export function UniversitiesClient() {
   }
 
   const ws = workspace;
+  const nowMs = Date.now();
+  const startKey = ws.admin.calendar.startFieldKey ?? "admission_start";
+  const endKey = ws.admin.calendar.endFieldKey ?? "admission_end";
+
+  const universityMeta = useMemo(() => {
+    const out = new Map<
+      string,
+      { startMs: number | null; endMs: number | null; status: UniPeriodStatus }
+    >();
+    for (const u of ws.universities) {
+      const s = u.fields?.[startKey];
+      const e = u.fields?.[endKey];
+      const startMs =
+        typeof s === "string" ? parseYmdToMs(s) : typeof s === "number" ? s : null;
+      const endMs =
+        typeof e === "string" ? parseYmdToMs(e) : typeof e === "number" ? e : null;
+      out.set(u.id, { startMs, endMs, status: classifyPeriod(startMs, endMs, nowMs) });
+    }
+    return out;
+  }, [ws.universities, startKey, endKey, nowMs]);
+
+  const filteredUniversities = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    const startFromMs = startFrom ? parseYmdToMs(startFrom) : null;
+    const endToMs = endTo ? parseYmdToMs(endTo) : null;
+
+    return universities.filter((u) => {
+      const meta = universityMeta.get(u.id);
+      const status = meta?.status ?? "no_dates";
+
+      if (statusFilter !== "all" && status !== statusFilter) return false;
+
+      if (query) {
+        const hay = `${u.name} ${u.city ?? ""} ${u.degreeTitle ?? ""}`.toLowerCase();
+        if (!hay.includes(query)) return false;
+      }
+
+      if (feeFilter !== "all") {
+        const has = typeof u.tuitionFeePerSemester === "number";
+        if (feeFilter === "has" && !has) return false;
+        if (feeFilter === "missing" && has) return false;
+      }
+
+      if (germanFilter !== "all") {
+        const req = Boolean(u.germanLanguageTestRequired);
+        if (germanFilter === "required" && !req) return false;
+        if (germanFilter === "not_required" && req) return false;
+      }
+
+      if (uniAssistFilter !== "all") {
+        const has = Boolean(u.uniAssistUrl);
+        if (uniAssistFilter === "has" && !has) return false;
+        if (uniAssistFilter === "missing" && has) return false;
+      }
+
+      if (daadFilter !== "all") {
+        const has = Boolean(u.daadUrl);
+        if (daadFilter === "has" && !has) return false;
+        if (daadFilter === "missing" && has) return false;
+      }
+
+      if (startFromMs !== null || endToMs !== null) {
+        const s = meta?.startMs ?? null;
+        const e = meta?.endMs ?? null;
+        // Filter by overlap with [startFromMs, endToMs]
+        const left = startFromMs ?? -Infinity;
+        const right = endToMs ?? Infinity;
+        const uniLeft = s ?? e ?? null;
+        const uniRight = e ?? s ?? null;
+        if (uniLeft === null || uniRight === null) return false;
+        if (uniRight < left || uniLeft > right) return false;
+      }
+
+      return true;
+    });
+  }, [
+    universities,
+    universityMeta,
+    q,
+    statusFilter,
+    startFrom,
+    endTo,
+    feeFilter,
+    germanFilter,
+    uniAssistFilter,
+    daadFilter,
+  ]);
+
+  const counts = useMemo(() => {
+    const base = {
+      total: universities.length,
+      filtered: filteredUniversities.length,
+      open_now: 0,
+      opening_soon: 0,
+      closing_soon: 0,
+      upcoming: 0,
+      past: 0,
+      no_dates: 0,
+    };
+    for (const u of filteredUniversities) {
+      const s = universityMeta.get(u.id)?.status ?? "no_dates";
+      base[s] += 1;
+    }
+    return base;
+  }, [universities.length, filteredUniversities, universityMeta]);
 
   async function upsertUniversity(
     nextUni: University,
@@ -111,6 +288,8 @@ export function UniversitiesClient() {
       name: "",
       city: "",
       website: "",
+      uniAssistUrl: "",
+      daadUrl: "",
       degreeTitle: "",
       durationSemesters: undefined,
       tuitionFeePerSemester: undefined,
@@ -137,7 +316,9 @@ export function UniversitiesClient() {
     if (!name) return;
 
     const city = String(form.get("city") ?? "").trim();
-    const website = String(form.get("website") ?? "").trim();
+    const website = normalizeUrlOrEmpty(String(form.get("website") ?? ""));
+    const uniAssistUrl = normalizeUrlOrEmpty(String(form.get("uniAssistUrl") ?? ""));
+    const daadUrl = normalizeUrlOrEmpty(String(form.get("daadUrl") ?? ""));
     const degreeTitle = String(form.get("degreeTitle") ?? "").trim();
     const durationSemesters = parseNumberOrNull(String(form.get("durationSemesters") ?? ""));
     const tuitionFeePerSemester = parseNumberOrNull(String(form.get("tuitionFeePerSemester") ?? ""));
@@ -163,6 +344,8 @@ export function UniversitiesClient() {
       name,
       city: city || undefined,
       website: website || undefined,
+      uniAssistUrl: uniAssistUrl || undefined,
+      daadUrl: daadUrl || undefined,
       degreeTitle: degreeTitle || undefined,
       durationSemesters: durationSemesters || undefined,
       tuitionFeePerSemester: tuitionFeePerSemester ?? undefined,
@@ -175,8 +358,8 @@ export function UniversitiesClient() {
     });
 
     if (res.ok) {
-      setEditing(null);
-      setCreating(false);
+    setEditing(null);
+    setCreating(false);
       setNotice(res.created ? "University added" : "University updated");
     }
   }
@@ -203,13 +386,13 @@ export function UniversitiesClient() {
             ) : null}
           </div>
           {!readOnly ? (
-            <button
-              type="button"
-              onClick={startCreate}
-              className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
-            >
-              Add university
-            </button>
+          <button
+            type="button"
+            onClick={startCreate}
+            className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90"
+          >
+            Add university
+          </button>
           ) : null}
         </div>
 
@@ -218,6 +401,167 @@ export function UniversitiesClient() {
             <span className="font-semibold">Error:</span> {error}
           </div>
         ) : null}
+
+        <div className="mt-4 rounded-2xl border border-black/10 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-sm text-black/70">
+              Showing <span className="font-semibold text-black">{counts.filtered}</span> of{" "}
+              <span className="font-semibold text-black">{counts.total}</span>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="rounded-lg border border-black/10 bg-white px-2 py-1">
+                Open: <span className="font-semibold">{counts.open_now}</span>
+              </span>
+              <span className="rounded-lg border border-black/10 bg-white px-2 py-1">
+                Opening soon: <span className="font-semibold">{counts.opening_soon}</span>
+              </span>
+              <span className="rounded-lg border border-black/10 bg-white px-2 py-1">
+                Closing soon: <span className="font-semibold">{counts.closing_soon}</span>
+              </span>
+              <span className="rounded-lg border border-black/10 bg-white px-2 py-1">
+                Upcoming: <span className="font-semibold">{counts.upcoming}</span>
+                </span>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                Search
+              </div>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Name / city / degree…"
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                Status
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              >
+                <option value="all">All</option>
+                <option value="open_now">Open now</option>
+                <option value="opening_soon">Opening soon (14d)</option>
+                <option value="closing_soon">Closing soon (14d)</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="past">Past</option>
+                <option value="no_dates">No dates</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                Start from
+              </div>
+              <input
+                type="date"
+                value={startFrom}
+                onChange={(e) => setStartFrom(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                End to
+              </div>
+              <input
+                type="date"
+                value={endTo}
+                onChange={(e) => setEndTo(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+            </label>
+
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                Fee
+              </div>
+              <select
+                value={feeFilter}
+                onChange={(e) => setFeeFilter(e.target.value as any)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              >
+                <option value="all">All</option>
+                <option value="has">Has fee</option>
+                <option value="missing">Missing fee</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                German
+              </div>
+              <select
+                value={germanFilter}
+                onChange={(e) => setGermanFilter(e.target.value as any)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              >
+                <option value="all">All</option>
+                <option value="required">Required</option>
+                <option value="not_required">Not required</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-2">
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                Uni-Assist link
+              </div>
+              <select
+                value={uniAssistFilter}
+                onChange={(e) => setUniAssistFilter(e.target.value as any)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              >
+                <option value="all">All</option>
+                <option value="has">Has link</option>
+                <option value="missing">Missing link</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <div className="text-xs font-semibold text-black/60 uppercase tracking-wide">
+                DAAD link
+              </div>
+              <select
+                value={daadFilter}
+                onChange={(e) => setDaadFilter(e.target.value as any)}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              >
+                <option value="all">All</option>
+                <option value="has">Has link</option>
+                <option value="missing">Missing link</option>
+              </select>
+            </label>
+            </div>
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => {
+                setQ("");
+                setStatusFilter("all");
+                setStartFrom("");
+                setEndTo("");
+                setFeeFilter("all");
+                setGermanFilter("all");
+                setUniAssistFilter("all");
+                setDaadFilter("all");
+              }}
+              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+            >
+              Reset filters
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
@@ -231,6 +575,8 @@ export function UniversitiesClient() {
                 <th className="px-4 py-3">Duration</th>
                 <th className="px-4 py-3">Fee</th>
                 <th className="px-4 py-3">German lang</th>
+                <th className="px-4 py-3">Uni-Assist</th>
+                <th className="px-4 py-3">DAAD</th>
                 {visibleUniFields.map((def) => (
                   <th key={def.id} className="px-4 py-3">
                     {def.label}
@@ -242,14 +588,14 @@ export function UniversitiesClient() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/10">
-              {universities.length === 0 ? (
+              {filteredUniversities.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-4 text-black/70" colSpan={9 + visibleUniFields.length}>
-                    No universities yet. Click “Add university”.
+                  <td className="px-4 py-4 text-black/70" colSpan={11 + visibleUniFields.length}>
+                    No universities match these filters.
                   </td>
                 </tr>
               ) : (
-                universities.map((u) => (
+                filteredUniversities.map((u) => (
                   <tr key={u.id} className="hover:bg-black/5">
                     <td className="px-4 py-3 font-semibold text-black">
                       {u.website ? (
@@ -259,7 +605,7 @@ export function UniversitiesClient() {
                           rel="noreferrer"
                           className="underline hover:no-underline"
                         >
-                          {u.name}
+                      {u.name}
                         </a>
                       ) : (
                         u.name
@@ -277,6 +623,34 @@ export function UniversitiesClient() {
                           ? "Yes"
                           : "No"
                         : ""}
+                    </td>
+                    <td className="px-4 py-3 text-black/70">
+                      {u.uniAssistUrl ? (
+                        <a
+                          href={u.uniAssistUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          Link
+                        </a>
+                      ) : (
+                        ""
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-black/70">
+                      {u.daadUrl ? (
+                        <a
+                          href={u.daadUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          Link
+                        </a>
+                      ) : (
+                        ""
+                      )}
                     </td>
                     {visibleUniFields.map((def) => {
                       const v = u.fields?.[def.key] ?? null;
@@ -329,15 +703,15 @@ export function UniversitiesClient() {
                               className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
                             >
                               Update
-                            </button>
-                            <button
-                              type="button"
-                              disabled={saving}
-                              onClick={() => void deleteUniversity(u.id)}
-                              className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
-                            >
-                              Delete
-                            </button>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => void deleteUniversity(u.id)}
+                          className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5 disabled:opacity-60"
+                        >
+                          Delete
+                        </button>
                           </>
                         ) : null}
                       </div>
@@ -359,7 +733,7 @@ export function UniversitiesClient() {
           <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xl">
             <div className="flex items-start justify-between gap-3 border-b border-black/10 p-5">
               <div className="text-lg font-semibold text-black">
-                {creating ? "Add university" : "Update university"}
+            {creating ? "Add university" : "Update university"}
               </div>
               <button
                 type="button"
@@ -371,62 +745,84 @@ export function UniversitiesClient() {
               >
                 Close
               </button>
-            </div>
+          </div>
 
             <div className="max-h-[80vh] overflow-auto p-5">
               <form onSubmit={submitForm} className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="block">
-                    <div className="text-sm font-medium text-black">Name</div>
-                    <input
-                      name="name"
-                      defaultValue={editing.name}
-                      required
-                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                    />
-                  </label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="block">
+                <div className="text-sm font-medium text-black">Name</div>
+                <input
+                  name="name"
+                  defaultValue={editing.name}
+                  required
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
+
+              <label className="block">
+                <div className="text-sm font-medium text-black">City</div>
+                <input
+                  name="city"
+                  defaultValue={editing.city ?? ""}
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
+
+              <label className="block md:col-span-2">
+                <div className="text-sm font-medium text-black">Website</div>
+                <input
+                  name="website"
+                  type="url"
+                  defaultValue={editing.website ?? ""}
+                  placeholder="https://…"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
 
                   <label className="block">
-                    <div className="text-sm font-medium text-black">City</div>
+                    <div className="text-sm font-medium text-black">Uni-Assist link</div>
                     <input
-                      name="city"
-                      defaultValue={editing.city ?? ""}
-                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                    />
-                  </label>
-
-                  <label className="block md:col-span-2">
-                    <div className="text-sm font-medium text-black">Website</div>
-                    <input
-                      name="website"
+                      name="uniAssistUrl"
                       type="url"
-                      defaultValue={editing.website ?? ""}
+                      defaultValue={editing.uniAssistUrl ?? ""}
                       placeholder="https://…"
                       className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
                     />
                   </label>
 
                   <label className="block">
-                    <div className="text-sm font-medium text-black">Degree title</div>
+                    <div className="text-sm font-medium text-black">DAAD link</div>
                     <input
-                      name="degreeTitle"
-                      defaultValue={editing.degreeTitle ?? ""}
-                      placeholder="e.g. Master of Science in Computer Science"
+                      name="daadUrl"
+                      type="url"
+                      defaultValue={editing.daadUrl ?? ""}
+                      placeholder="https://…"
                       className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
                     />
                   </label>
 
-                  <label className="block">
-                    <div className="text-sm font-medium text-black">Duration (semesters)</div>
-                    <input
-                      name="durationSemesters"
-                      type="number"
-                      min="1"
-                      defaultValue={editing.durationSemesters ?? ""}
-                      placeholder="e.g. 4"
-                      className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                    />
-                  </label>
+              <label className="block">
+                <div className="text-sm font-medium text-black">Degree title</div>
+                <input
+                  name="degreeTitle"
+                  defaultValue={editing.degreeTitle ?? ""}
+                  placeholder="e.g. Master of Science in Computer Science"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
+
+              <label className="block">
+                <div className="text-sm font-medium text-black">Duration (semesters)</div>
+                <input
+                  name="durationSemesters"
+                  type="number"
+                  min="1"
+                  defaultValue={editing.durationSemesters ?? ""}
+                  placeholder="e.g. 4"
+                  className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </label>
 
                   <label className="block">
                     <div className="text-sm font-medium text-black">Fee (EUR / semester)</div>
@@ -460,50 +856,50 @@ export function UniversitiesClient() {
                 </div>
 
                 {formUniFields.length ? (
-                  <div className="rounded-2xl border border-black/10 bg-white p-4">
+              <div className="rounded-2xl border border-black/10 bg-white p-4">
                     <div className="text-sm font-semibold text-black">Custom fields</div>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
                       {formUniFields.map((def) => (
-                        <CustomFieldInput
-                          key={def.id}
-                          def={def}
-                          defaultValue={editing.fields?.[def.key] ?? null}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+                    <CustomFieldInput
+                      key={def.id}
+                      def={def}
+                      defaultValue={editing.fields?.[def.key] ?? null}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
-                <label className="block">
-                  <div className="text-sm font-medium text-black">Notes</div>
-                  <textarea
-                    name="notes"
-                    defaultValue={editing.notes ?? ""}
-                    rows={3}
-                    className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
-                  />
-                </label>
+            <label className="block">
+              <div className="text-sm font-medium text-black">Notes</div>
+              <textarea
+                name="notes"
+                defaultValue={editing.notes ?? ""}
+                rows={3}
+                className="mt-2 w-full rounded-xl border border-black/20 bg-white px-3 py-2 text-sm text-black outline-none focus:ring-2 focus:ring-black/20"
+              />
+            </label>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
-                  >
-                    {saving ? "Saving…" : "Save"}
-                  </button>
-                  <button
-                    type="button"
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-xl bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-60"
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+              <button
+                type="button"
                     onClick={() => {
                       setEditing(null);
                       setCreating(false);
                     }}
-                    className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+                className="rounded-xl border border-black/20 bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-black/5"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
             </div>
           </div>
         </div>
@@ -567,6 +963,36 @@ export function UniversitiesClient() {
                           ? "Yes"
                           : "No"
                         : "—"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Uni-Assist:</span>{" "}
+                      {viewing.uniAssistUrl ? (
+                        <a
+                          href={viewing.uniAssistUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          Link
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-medium">DAAD:</span>{" "}
+                      {viewing.daadUrl ? (
+                        <a
+                          href={viewing.daadUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="underline hover:no-underline"
+                        >
+                          Link
+                        </a>
+                      ) : (
+                        "—"
+                      )}
                     </div>
                   </div>
                 </div>
